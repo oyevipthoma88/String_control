@@ -305,26 +305,24 @@ async def log_deep(title, user, extra=""):
     except Exception:
         pass
 
-# ===== FINAL OVERRIDE (Telethon 1.45 safe) =====
+# ===== FINAL OVERRIDE (Telethon 1.45 strings) =====
 import logging as _lg
 _ULOG = _lg.getLogger(__name__)
 
+# Bot API 9.4 styles as STRINGS (Telethon 1.45 expects strings)
+_P = "primary"
+_D = "danger"
+_S = "success"
+
 def _btn(t, d, s=None):
-    """Create inline button. Style optional, falls back gracefully."""
+    """Create inline button with optional style string."""
+    from telethon.tl.custom import Button
     try:
-        from telethon.tl.custom import Button
-        if s is not None:
-            try:
-                return Button.inline(t, data=d, style=s)
-            except TypeError:
-                _ULOG.info("Button.inline does not accept style — using raw callback")
-                from telethon.tl.types import KeyboardButtonCallback
-                data = d.encode() if isinstance(d, str) else d
-                return KeyboardButtonCallback(text=t, data=data, style=s)
+        if s:
+            return Button.inline(t, data=d, style=s)
         return Button.inline(t, data=d)
     except Exception as e:
         _ULOG.warning(f"_btn fallback: {e}")
-        from telethon.tl.custom import Button
         return Button.inline(t, data=d)
 
 KEYBOARD1 = [
@@ -341,8 +339,8 @@ KEYBOARD2 = [
 START_TEXT = (
     "<b>🛡️ APEX STRING CONTROL</b>\n"
     "<i>Secure · Fast · Reliable</i>\n\n"
-    "<blockquote expandable><b>Your Telegram session cockpit.</b>\n"
-    "Create, inspect and revoke Pyrogram & Telethon sessions with bank-grade hygiene.</blockquote>\n\n"
+    "<b>Your Telegram session cockpit.</b>\n"
+    "Create, inspect and revoke Pyrogram & Telethon sessions with bank-grade hygiene.\n\n"
     "━━━━━━━━━━━━━━━\n"
     "<b>⚡ Features</b>\n"
     "• Pyrogram & Telethon sessions\n"

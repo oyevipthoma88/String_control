@@ -86,3 +86,10 @@ async def op_input(event):
     await settings.set(key, val)
     label, _ = LABELS[key]
     await event.reply(f"✅ <b>{label}</b> updated:\n<code>{val}</code>", parse_mode="html", buttons=panel_kb())
+
+
+@bot.on(events.CallbackQuery(data=b"OP_OPEN"))
+async def op_open(event):
+    if not own(event.sender_id):
+        return await event.answer("⛔ Owner only", alert=True)
+    await event.edit(PANEL_TEXT, buttons=panel_kb(), parse_mode="html")
