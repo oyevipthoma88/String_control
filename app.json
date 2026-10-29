@@ -1,12 +1,52 @@
 {
   "name": "Apex String Control",
-  "description": "Apex branded session controller",
+  "description": "Apex branded Telegram session controller",
   "repository": "https://github.com/oyevipthoma88/String_control",
+  "keywords": [
+    "telegram",
+    "telethon",
+    "session",
+    "apex"
+  ],
   "env": {
-    "API_ID": {"description": "API_ID"},
-    "API_HASH": {"description": "API_HASH"},
-    "BOT_TOKEN": {"description": "Bot token"},
-    "SUDOERS": {"description": "Owner IDs"},
-    "MONGO_URL": {"description": "MongoDB URL"}
-  }
+    "API_ID": {
+      "description": "Telegram API_ID from my.telegram.org"
+    },
+    "API_HASH": {
+      "description": "Telegram API_HASH from my.telegram.org"
+    },
+    "BOT_TOKEN": {
+      "description": "Bot token from @BotFather"
+    },
+    "SUDOERS": {
+      "description": "Owner numeric IDs (space-separated)"
+    },
+    "MONGO_URL": {
+      "description": "MongoDB connection string",
+      "required": false
+    },
+    "LOG_GROUP_ID": {
+      "description": "Log channel ID",
+      "required": false
+    },
+    "MUST_JOIN": {
+      "description": "Force-sub channel username",
+      "required": false
+    },
+    "DISABLED": {
+      "description": "Disabled modules e.g. C J",
+      "required": false
+    }
+  },
+  "formation": {
+    "worker": {
+      "quantity": 1,
+      "size": "basic"
+    }
+  },
+  "buildpacks": [
+    {
+      "url": "heroku/python"
+    }
+  ]
 }
