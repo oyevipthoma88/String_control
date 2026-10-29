@@ -41,7 +41,7 @@ async def panel(event):
         return await event.reply("⛔ Owner only.")
     await event.reply(PANEL_TEXT, buttons=panel_kb(), parse_mode="html")
 
-@bot.on(events.CallbackQuery(data=b"OP_OPEN"))
+@bot.on(events.CallbackQuery(data=b"OWNER_OPEN"))
 async def op_open(event):
     await safe_answer(event)
     if not own(event.sender_id):

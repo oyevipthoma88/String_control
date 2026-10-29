@@ -17,14 +17,8 @@ async def show_start(uid, sender):
         pic = ""
     is_owner = uid in set(env.SUDOERS)
     kb = start_buttons(is_owner)
-    if pic:
-        try:
-            await bot.send_file(uid, file=pic, caption=text, buttons=kb, parse_mode="html")
-        except Exception as e:
-            _LOG.warning("start pic: %s", e)
-            await bot.send_message(uid, text, buttons=kb, parse_mode="html")
-    else:
-        await bot.send_message(uid, text, buttons=kb, parse_mode="html")
+    from Hack.helpers import send_media_safe
+    await send_media_safe(uid, pic, text, kb)
 
 @bot.on(events.NewMessage(pattern="/start"))
 async def start(event):

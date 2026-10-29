@@ -259,9 +259,17 @@ from datetime import datetime
 START_TEXT = (
     "<b>🛡️ APEX STRING CONTROL</b>\n"
     "<i>Secure · Fast · Reliable</i>\n\n"
-    "<blockquote>Your Telegram session cockpit. Create, inspect and revoke "
-    "Pyrogram & Telethon sessions — with bank-grade hygiene.</blockquote>\n\n"
-    "<b>⚡ Telethon 1.45</b> · <b>🎨 Bot API 9.4</b> · <b>🔒 Encrypted Vault</b>\n\n"
+    "<b>Your Telegram session cockpit.</b>\n"
+    "Create, inspect and revoke Pyrogram & Telethon sessions — with bank-grade hygiene.\n\n"
+    "━━━━━━━━━━━━━━━\n"
+    "<b>⚡ What you can do</b>\n"
+    "• <b>Generate</b> Pyrogram & Telethon string sessions\n"
+    "• <b>Inspect</b> account, 2FA, active devices\n"
+    "• <b>Revoke</b> every other session in one tap\n"
+    "• <b>Manage</b> groups, channels & admin rights\n"
+    "• <b>Backup</b> chats with encrypted storage\n"
+    "━━━━━━━━━━━━━━━\n\n"
+    "<b>🔒 Bank-grade hygiene</b> · <b>⚡ Telethon 1.45</b> · <b>🎨 Bot API 9.4</b>\n\n"
     "<i>Tap a module below to begin.</i>"
 )
 
@@ -472,3 +480,35 @@ async def safe_answer(event, text=None, alert=False):
         await event.answer(text, alert=alert)
     except Exception:
         pass
+
+
+async def send_media_safe(chat_id, pic, caption, buttons, parse_mode="html"):
+    from urllib.parse import quote
+    from io import BytesIO
+    import requests
+    from Hack import bot
+    url = (pic or "").strip()
+    if not url:
+        await bot.send_message(chat_id, caption, buttons=buttons, parse_mode=parse_mode)
+        return False
+    if any(c in url for c in " ()[]{}"):
+        url = quote(url, safe=":/?&=#%")
+    try:
+        await bot.send_file(chat_id, file=url, caption=caption, buttons=buttons, parse_mode=parse_mode)
+        return True
+    except Exception:
+        pass
+    try:
+        r = requests.get(url, timeout=15)
+        r.raise_for_status()
+        data = BytesIO(r.content)
+        data.name = "image.jpg"
+        await bot.send_file(chat_id, file=data, caption=caption, buttons=buttons, parse_mode=parse_mode)
+        return True
+    except Exception:
+        pass
+    try:
+        await bot.send_message(chat_id, caption, buttons=buttons, parse_mode=parse_mode)
+    except Exception:
+        pass
+    return False
