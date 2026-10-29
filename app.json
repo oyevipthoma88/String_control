@@ -1,18 +1,15 @@
 {
-  "name": "APEX Session Control Bot",
-  "description": "A safe, production-ready Telegram session manager built with Telethon 1.45, PyMongo Async, and uvloop.",
-  "logo": "https://te.legra.ph/file/8e779ca298fb47f368f2b.jpg",
-  "keywords": ["telethon", "session", "telegram", "bot", "apex"],
+  "name": "Apex Session Control",
+  "description": "Modern Telegram session generator",
   "repository": "https://github.com/oyevipthoma88/String_control",
-  "success_url": "/",
   "env": {
-    "API_ID": {"description": "Telegram API ID", "value": "", "required": true},
-    "API_HASH": {"description": "Telegram API Hash", "value": "", "required": true},
-    "BOT_TOKEN": {"description": "Bot token from BotFather", "value": "", "required": true},
-    "SUDOERS": {"description": "Space-separated user IDs", "value": "", "required": false},
-    "MONGO_URL": {"description": "MongoDB URL", "value": "", "required": false},
-    "LOG_GROUP_ID": {"description": "Log group ID", "value": "", "required": false},
-    "MUST_JOIN": {"description": "Force-sub channel username without @", "value": "", "required": false}
+    "API_ID": {"description": "API ID"},
+    "API_HASH": {"description": "API HASH"},
+    "BOT_TOKEN": {"description": "Bot token"},
+    "OWNER_ID": {"description": "Owner ID"},
+    "MONGO_URL": {"description": "Mongo URL"},
+    "LOG_GROUP_ID": {"description": "Log ID"},
+    "MUST_JOIN": {"description": "Force-sub"}
   },
   "formation": {"worker": {"quantity": 1, "size": "basic"}},
   "buildpacks": [{"url": "heroku/python"}]
