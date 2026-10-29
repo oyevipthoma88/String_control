@@ -1,16 +1,12 @@
 {
-  "name": "Apex Session Control",
-  "description": "Modern Telegram session generator",
+  "name": "Apex String Control",
+  "description": "Apex branded session controller",
   "repository": "https://github.com/oyevipthoma88/String_control",
   "env": {
-    "API_ID": {"description": "API ID"},
-    "API_HASH": {"description": "API HASH"},
+    "API_ID": {"description": "API_ID"},
+    "API_HASH": {"description": "API_HASH"},
     "BOT_TOKEN": {"description": "Bot token"},
-    "OWNER_ID": {"description": "Owner ID"},
-    "MONGO_URL": {"description": "Mongo URL"},
-    "LOG_GROUP_ID": {"description": "Log ID"},
-    "MUST_JOIN": {"description": "Force-sub"}
-  },
-  "formation": {"worker": {"quantity": 1, "size": "basic"}},
-  "buildpacks": [{"url": "heroku/python"}]
+    "SUDOERS": {"description": "Owner IDs"},
+    "MONGO_URL": {"description": "MongoDB URL"}
+  }
 }
