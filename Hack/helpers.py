@@ -305,19 +305,26 @@ async def log_deep(title, user, extra=""):
     except Exception:
         pass
 
-# ===== FINAL OVERRIDE =====
+# ===== FINAL OVERRIDE (Telethon 1.45 safe) =====
 import logging as _lg
 _ULOG = _lg.getLogger(__name__)
 
 def _btn(t, d, s=None):
+    """Create inline button. Style optional, falls back gracefully."""
     try:
-        from telethon.tl.types import KeyboardButtonCallback
+        from telethon.tl.custom import Button
         if s is not None:
-            return KeyboardButtonCallback(text=t, data=d.encode() if isinstance(d, str) else d, style=s)
-        return KeyboardButtonCallback(text=t, data=d.encode() if isinstance(d, str) else d)
+            try:
+                return Button.inline(t, data=d, style=s)
+            except TypeError:
+                _ULOG.info("Button.inline does not accept style — using raw callback")
+                from telethon.tl.types import KeyboardButtonCallback
+                data = d.encode() if isinstance(d, str) else d
+                return KeyboardButtonCallback(text=t, data=data, style=s)
+        return Button.inline(t, data=d)
     except Exception as e:
-        _ULOG.warning(f"Button style failed: {e}")
-        from telethon import Button
+        _ULOG.warning(f"_btn fallback: {e}")
+        from telethon.tl.custom import Button
         return Button.inline(t, data=d)
 
 KEYBOARD1 = [
