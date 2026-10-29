@@ -12,3 +12,5 @@ DISABLED = os.getenv("DISABLED", "").split()
 if not API_ID: raise SystemExit("❌ API_ID missing in .env")
 if not API_HASH: raise SystemExit("❌ API_HASH missing in .env")
 if not BOT_TOKEN: raise SystemExit("❌ BOT_TOKEN missing in .env")
+
+START_PIC = os.getenv("START_PIC", "")

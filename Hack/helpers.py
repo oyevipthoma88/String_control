@@ -264,3 +264,43 @@ KEYBOARD2 = [
     [_btn("M", "M", _D), _btn("N", "N", _P), _btn("O", "O", _S), _btn("P", "P", _S)],
     [_btn("𝗕𝗔𝗖𝗞 ⏮️", "back", _S)],
 ]
+
+
+# ===== APEX PREMIUM UI =====
+from datetime import datetime
+
+START_TEXT = (
+    "<b>🛡️ APEX STRING CONTROL</b>\n"
+    "<i>Secure · Fast · Reliable</i>\n\n"
+    "<blockquote>Your Telegram session cockpit. Create, inspect and revoke "
+    "Pyrogram & Telethon sessions — with bank-grade hygiene.</blockquote>\n\n"
+    "<b>⚡ Telethon 1.45</b> · <b>🎨 Bot API 9.4</b> · <b>🔒 Encrypted Vault</b>\n\n"
+    "<i>Tap a module below to begin.</i>"
+)
+
+START_BUTTON = [
+    [_btn("🔐 Vault", "VAULT", _P), _btn("📊 Account", "ACCOUNT", _P)],
+    [_btn("📖 Help", "HELP", _S), _btn("📡 Status", "STATUS", _S)],
+]
+
+
+async def log_deep(title, user, extra=""):
+    try:
+        import env
+        from Hack import bot
+        if not env.LOG_GROUP_ID:
+            return
+        name = user.first_name or "—"
+        uname = getattr(user, "username", None)
+        ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        body = f"<b>{title}</b>\n\n"
+        body += f"<b>Name:</b> {name}\n"
+        body += f"<b>ID:</b> <code>{user.id}</code>\n"
+        if uname:
+            body += f"<b>User:</b> @{uname}\n"
+        body += f"<b>Time:</b> <code>{ts}</code>\n"
+        if extra:
+            body += "\n" + extra
+        await bot.send_message(env.LOG_GROUP_ID, body, parse_mode="html")
+    except Exception:
+        pass
