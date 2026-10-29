@@ -20,18 +20,18 @@ PANEL_TEXT = (
 def panel_kb():
     return [
         [btn("🖼 Start Pic", "OP_PIC", P), btn("📝 Start Text", "OP_TEXT", P)],
-        [btn("📢 Support Link", "OP_SUPPORT", S), btn("🔒 Force Channel 1", "OP_F1", S)],
-        [btn("🔗 Force Channel 2", "OP_F2", S), btn("📨 Broadcast", "OP_BC", D)],
+        [btn("📢 Support", "OP_SUPPORT", S), btn("🔒 Force Ch 1", "OP_F1", S)],
+        [btn("🔗 Force Ch 2", "OP_F2", S), btn("📨 Broadcast", "OP_BC", D)],
         [btn("🛠 Maintenance", "OP_MAINT", D), btn("📊 Stats", "OP_STATS", S)],
         [btn("🏠 Back", "BACK_START", S)],
     ]
 
 LABELS = {
-    "START_PIC": ("🖼 Start Pic", "Send a direct image URL (must end with .png/.jpg)."),
-    "START_TEXT": ("📝 Start Text", "Send new HTML text for /start."),
-    "SUPPORT": ("📢 Support Link", "Send a t.me link or username."),
-    "MUST_JOIN": ("🔒 Force Channel 1", "Send channel username without @."),
-    "MUST_JOIN_2": ("🔗 Force Channel 2", "Send channel username without @."),
+    "START_PIC": ("🖼 Start Pic", "Send a direct image URL."),
+    "START_TEXT": ("📝 Start Text", "Send new HTML text."),
+    "SUPPORT": ("📢 Support", "Send a t.me link."),
+    "MUST_JOIN": ("🔒 Force Channel 1", "Username without @."),
+    "MUST_JOIN_2": ("🔗 Force Channel 2", "Username without @."),
     "MAINTENANCE": ("🛠 Maintenance", "Send on or off."),
 }
 
@@ -57,29 +57,30 @@ async def _open(event, key):
     label, hint = LABELS[key]
     cur = await settings.get(key, "")
     STATE[event.sender_id] = key
-    await event.edit(
-        f"<b>{label}</b>\n\n{hint}\n\nCurrent: <code>{cur or '—'}</code>",
-        buttons=[[btn("🏠 Back", "OP_BACK", S)]],
-        parse_mode="html",
-    )
-
+    await event.edit(f"<b>{label}</b>\n\n{hint}\n\nCurrent: <code>{cur or chr(45)}</code>", buttons=[[btn("🏠 Back", "OP_BACK", S)]], parse_mode="html")
 @bot.on(events.CallbackQuery(data=b"OP_PIC"))
-async def op_pic(event): await _open(event, "START_PIC")
+async def op_pic(event):
+    await _open(event, "START_PIC")
 
 @bot.on(events.CallbackQuery(data=b"OP_TEXT"))
-async def op_text(event): await _open(event, "START_TEXT")
+async def op_text(event):
+    await _open(event, "START_TEXT")
 
 @bot.on(events.CallbackQuery(data=b"OP_SUPPORT"))
-async def op_support(event): await _open(event, "SUPPORT")
+async def op_support(event):
+    await _open(event, "SUPPORT")
 
 @bot.on(events.CallbackQuery(data=b"OP_F1"))
-async def op_f1(event): await _open(event, "MUST_JOIN")
+async def op_f1(event):
+    await _open(event, "MUST_JOIN")
 
 @bot.on(events.CallbackQuery(data=b"OP_F2"))
-async def op_f2(event): await _open(event, "MUST_JOIN_2")
+async def op_f2(event):
+    await _open(event, "MUST_JOIN_2")
 
 @bot.on(events.CallbackQuery(data=b"OP_MAINT"))
-async def op_maint(event): await _open(event, "MAINTENANCE")
+async def op_maint(event):
+    await _open(event, "MAINTENANCE")
 
 @bot.on(events.CallbackQuery(data=b"OP_STATS"))
 async def op_stats(event):
@@ -94,7 +95,7 @@ async def op_stats(event):
         pass
     body = f"<b>📊 Stats</b>\n\n<b>Users:</b> <code>{users}</code>\n{DIV}\n"
     for k, v in vals.items():
-        body += f"<b>{k}:</b> <code>{v or '—'}</code>\n"
+        body += f"<b>{k}:</b> <code>{v or chr(45)}</code>\n"
     await event.edit(body, buttons=[[btn("🏠 Back", "OP_BACK", S)]], parse_mode="html")
 
 @bot.on(events.CallbackQuery(data=b"OP_BC"))
@@ -102,12 +103,7 @@ async def op_bc(event):
     if not own(event.sender_id):
         return await event.answer("⛔", alert=True)
     STATE[event.sender_id] = "BROADCAST"
-    await event.edit(
-        "<b>📨 Broadcast</b>\n\nSend the message to broadcast to all users.\n\n"
-        "<i>HTML supported. Type /cancel to abort.</i>",
-        buttons=[[btn("🏠 Back", "OP_BACK", S)]],
-        parse_mode="html",
-    )
+    await event.edit("📨 <b>Broadcast</b>\n\nSend the message.\n\n<i>/cancel to abort</i>", buttons=[[btn("🏠 Back", "OP_BACK", S)]], parse_mode="html")
 
 @bot.on(events.NewMessage())
 async def op_input(event):
@@ -124,19 +120,19 @@ async def op_input(event):
     if key == "BROADCAST":
         return await do_broadcast(event, val)
     await settings.set(key, val)
-    label, _ = LABELS[key]
+    label = LABELS[key][0]
     await event.reply(f"✅ <b>{label}</b> updated:\n<code>{val}</code>", parse_mode="html", buttons=panel_kb())
 
 async def do_broadcast(event, text):
     if not DB:
-        return await event.reply("❌ No database configured.")
+        return await event.reply("❌ No DB.")
     col = getattr(DB, "users", None)
     if col is None:
         db = getattr(DB, "db", None) or getattr(DB, "database", None)
         if db is not None:
             col = db["users"]
     if col is None:
-        return await event.reply("❌ User collection not found.")
+        return await event.reply("❌ Users collection missing.")
     sent, failed = 0, 0
     status = await event.reply("📨 Broadcasting...")
     async for u in col.find({}):
@@ -157,7 +153,7 @@ async def do_broadcast(event, text):
             failed += 1
         if (sent + failed) % 20 == 0:
             try:
-                await status.edit(f"📨 Broadcasting...\n✅ {sent} | ❌ {failed}")
+                await status.edit(f"📨 {sent} ✓ | ❌ {failed}")
             except Exception:
                 pass
-    await status.edit(f"✅ <b>Broadcast done</b>\n\nSent: <code>{sent}</code>\nFailed: <code>{failed}</code>", parse_mode="html")
+    await status.edit(f"✅ <b>Done</b>\n\nSent: <code>{sent}</code>\nFailed: <code>{failed}</code>", parse_mode="html")
