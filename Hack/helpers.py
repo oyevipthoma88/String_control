@@ -399,7 +399,7 @@ def start_buttons(is_owner=False):
         [btn("📖 Help", "HELP", S), btn("📡 Bot Status", "STATUS", S)],
     ]
     if is_owner:
-        rows.append([btn("👑 Owner Panel", "OP_OPEN", D)])
+        rows.append([btn("👑 Owner Panel", "OWNER_OPEN", D)])
     return rows
 
 START_BUTTON = start_buttons(False)
