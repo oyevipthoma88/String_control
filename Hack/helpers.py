@@ -164,7 +164,7 @@ def on_callback(data=None):
                         pass
                 else:
                     LOGGER(__name__).error(ERROR_TXT)
-                await e.reply('Some Error occur from bot side. Please try again or contact support.')
+            await e.reply('❌ Something went wrong. Please try again or contact support.')
 
         bot.add_event_handler(wrap, CallbackQuery(data=data))
 
@@ -491,30 +491,32 @@ async def safe_answer(event, text=None, alert=False):
 async def send_media_safe(chat_id, pic, caption, buttons, parse_mode="html"):
     from urllib.parse import quote
     from io import BytesIO
-    import requests
-    from Hack import bot
+    import requests as _r
+    from Hack import bot as _b
     url = (pic or "").strip()
     if not url:
-        await bot.send_message(chat_id, caption, buttons=buttons, parse_mode=parse_mode)
+        await _b.send_message(chat_id, caption, buttons=buttons, parse_mode=parse_mode)
         return False
     if any(c in url for c in " ()[]{}"):
         url = quote(url, safe=":/?&=#%")
     try:
-        await bot.send_file(chat_id, file=url, caption=caption, buttons=buttons, parse_mode=parse_mode)
+        await _b.send_file(chat_id, file=url, caption=caption, buttons=buttons,
+                           parse_mode=parse_mode, force_document=False)
         return True
     except Exception:
         pass
     try:
-        r = requests.get(url, timeout=15)
+        r = _r.get(url, timeout=15)
         r.raise_for_status()
         data = BytesIO(r.content)
         data.name = "image.jpg"
-        await bot.send_file(chat_id, file=data, caption=caption, buttons=buttons, parse_mode=parse_mode)
+        await _b.send_file(chat_id, file=data, caption=caption, buttons=buttons,
+                           parse_mode=parse_mode, force_document=False)
         return True
     except Exception:
         pass
     try:
-        await bot.send_message(chat_id, caption, buttons=buttons, parse_mode=parse_mode)
+        await _b.send_message(chat_id, caption, buttons=buttons, parse_mode=parse_mode)
     except Exception:
         pass
     return False

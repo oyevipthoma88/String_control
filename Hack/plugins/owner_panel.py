@@ -126,6 +126,9 @@ async def op_input(event):
         return
     key = STATE.pop(uid)
     val = event.text.strip()
+    if key in ("MUST_JOIN", "MUST_JOIN_2", "SUPPORT"):
+        if not val:
+            return await event.reply("❌ Empty value.")
     if key == "START_PIC":
         if val.lower() in ("-", "clear", "reset"):
             await settings.set("START_PIC", "")
