@@ -304,3 +304,49 @@ async def log_deep(title, user, extra=""):
         await bot.send_message(env.LOG_GROUP_ID, body, parse_mode="html")
     except Exception:
         pass
+
+# ===== FINAL OVERRIDE =====
+import logging as _lg
+_ULOG = _lg.getLogger(__name__)
+
+def _btn(t, d, s=None):
+    try:
+        from telethon.tl.types import KeyboardButtonCallback
+        if s is not None:
+            return KeyboardButtonCallback(text=t, data=d.encode() if isinstance(d, str) else d, style=s)
+        return KeyboardButtonCallback(text=t, data=d.encode() if isinstance(d, str) else d)
+    except Exception as e:
+        _ULOG.warning(f"Button style failed: {e}")
+        from telethon import Button
+        return Button.inline(t, data=d)
+
+KEYBOARD1 = [
+    [_btn("A","A",_P), _btn("B","B",_P), _btn("C","C",_D), _btn("D","D",_P)],
+    [_btn("E","E",_P), _btn("F","F",_P), _btn("G","G",_D), _btn("H","H",_S)],
+    [_btn("▶ Next","next",_S)],
+]
+KEYBOARD2 = [
+    [_btn("I","I",_D), _btn("J","J",_D), _btn("K","K",_D), _btn("L","L",_P)],
+    [_btn("M","M",_D), _btn("N","N",_P), _btn("O","O",_S), _btn("P","P",_S)],
+    [_btn("◀ Back","back",_S)],
+]
+
+START_TEXT = (
+    "<b>🛡️ APEX STRING CONTROL</b>\n"
+    "<i>Secure · Fast · Reliable</i>\n\n"
+    "<blockquote expandable><b>Your Telegram session cockpit.</b>\n"
+    "Create, inspect and revoke Pyrogram & Telethon sessions with bank-grade hygiene.</blockquote>\n\n"
+    "━━━━━━━━━━━━━━━\n"
+    "<b>⚡ Features</b>\n"
+    "• Pyrogram & Telethon sessions\n"
+    "• 2FA protected vault\n"
+    "• One-tap revoke\n"
+    "• Encrypted storage\n"
+    "━━━━━━━━━━━━━━━\n\n"
+    "<i>Tap a module below to begin.</i>"
+)
+
+START_BUTTON = [
+    [_btn("🔐 Vault","VAULT",_P), _btn("📊 Account","ACCOUNT",_P)],
+    [_btn("📖 Help","HELP",_S), _btn("📡 Status","STATUS",_S)],
+]
