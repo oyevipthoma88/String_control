@@ -136,6 +136,10 @@ async def join_checker(e):
 def on_callback(data=None):
     def dec(func):
         async def wrap(e):
+            try:
+                await e.answer()
+            except Exception:
+                pass
             check = await join_checker(e)
             if not check:
                 return
@@ -154,7 +158,7 @@ def on_callback(data=None):
                 ERROR_TXT += f'\n\nERROR TRACEBACK:- {format_exc()}'
                 if LOG_GROUP_ID:
                     try:
-                        link = paste(ERROR_TXT)
+                        link = (ERROR_TXT)[:3500]
                         await bot.send_message(LOG_GROUP_ID, link, link_preview=False)
                     except:
                         pass
