@@ -1,7 +1,8 @@
 {
   "name": "Apex String Control",
-  "description": "Apex branded Telegram session controller",
+  "description": "Apex branded session controller",
   "repository": "https://github.com/oyevipthoma88/String_control",
+  "logo": "https://i.ibb.co/apex-logo.png",
   "keywords": [
     "telegram",
     "telethon",
