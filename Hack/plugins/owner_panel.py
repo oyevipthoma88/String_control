@@ -1,8 +1,10 @@
 import env
+import asyncio
 from telethon import events
+from telethon.errors import FloodWaitError
 from Hack import bot
-from Hack.helpers import _btn, _P, _S, _D
-from Hack.database import settings
+from Hack.helpers import btn, P, S, D, DIV
+from Hack.database import DB, settings
 
 OWNERS = set(env.SUDOERS)
 STATE = {}
@@ -10,22 +12,27 @@ STATE = {}
 def own(uid):
     return uid in OWNERS
 
-PANEL_TEXT = "<b>🛡️ Owner Control Panel</b>\n\n<blockquote>Manage bot settings live.</blockquote>"
+PANEL_TEXT = (
+    "<b>👑 Owner Control Panel</b>\n\n"
+    "<blockquote>Live settings for the bot.</blockquote>"
+)
 
 def panel_kb():
     return [
-        [_btn("🖼 Start Pic","OP_PIC",_P), _btn("📝 Start Text","OP_TEXT",_P)],
-        [_btn("📢 Support","OP_SUPPORT",_S), _btn("🔒 Force Sub","OP_FORCE",_S)],
-        [_btn("🛠 Maintenance","OP_MAINT",_D), _btn("📊 Stats","OP_STATS",_S)],
-        [_btn("🏠 Back","BACK_START",_S)],
+        [btn("🖼 Start Pic", "OP_PIC", P), btn("📝 Start Text", "OP_TEXT", P)],
+        [btn("📢 Support Link", "OP_SUPPORT", S), btn("🔒 Force Channel 1", "OP_F1", S)],
+        [btn("🔗 Force Channel 2", "OP_F2", S), btn("📨 Broadcast", "OP_BC", D)],
+        [btn("🛠 Maintenance", "OP_MAINT", D), btn("📊 Stats", "OP_STATS", S)],
+        [btn("🏠 Back", "BACK_START", S)],
     ]
 
 LABELS = {
-    "START_PIC": ("🖼 Start Pic","Send direct image URL."),
-    "START_TEXT": ("📝 Start Text","Send new HTML text."),
-    "SUPPORT": ("📢 Support","Send support link."),
-    "MUST_JOIN": ("🔒 Force Sub","Send channel username without @."),
-    "MAINTENANCE": ("🛠 Maintenance","Send on/off."),
+    "START_PIC": ("🖼 Start Pic", "Send a direct image URL (must end with .png/.jpg)."),
+    "START_TEXT": ("📝 Start Text", "Send new HTML text for /start."),
+    "SUPPORT": ("📢 Support Link", "Send a t.me link or username."),
+    "MUST_JOIN": ("🔒 Force Channel 1", "Send channel username without @."),
+    "MUST_JOIN_2": ("🔗 Force Channel 2", "Send channel username without @."),
+    "MAINTENANCE": ("🛠 Maintenance", "Send on or off."),
 }
 
 @bot.on(events.NewMessage(pattern="/panel"))
@@ -33,6 +40,12 @@ async def panel(event):
     if not own(event.sender_id):
         return await event.reply("⛔ Owner only.")
     await event.reply(PANEL_TEXT, buttons=panel_kb(), parse_mode="html")
+
+@bot.on(events.CallbackQuery(data=b"OP_OPEN"))
+async def op_open(event):
+    if not own(event.sender_id):
+        return await event.answer("⛔ Owner only", alert=True)
+    await event.edit(PANEL_TEXT, buttons=panel_kb(), parse_mode="html")
 
 @bot.on(events.CallbackQuery(data=b"OP_BACK"))
 async def op_back(event):
@@ -44,35 +57,57 @@ async def _open(event, key):
     label, hint = LABELS[key]
     cur = await settings.get(key, "")
     STATE[event.sender_id] = key
-    await event.edit(f"<b>{label}</b>\n\n{hint}\n\nCurrent: <code>{cur}</code>", buttons=[[_btn("🏠 Back","OP_BACK",_S)]], parse_mode="html")
+    await event.edit(
+        f"<b>{label}</b>\n\n{hint}\n\nCurrent: <code>{cur or '—'}</code>",
+        buttons=[[btn("🏠 Back", "OP_BACK", S)]],
+        parse_mode="html",
+    )
 
 @bot.on(events.CallbackQuery(data=b"OP_PIC"))
-async def op_pic(event):
-    await _open(event, "START_PIC")
+async def op_pic(event): await _open(event, "START_PIC")
 
 @bot.on(events.CallbackQuery(data=b"OP_TEXT"))
-async def op_text(event):
-    await _open(event, "START_TEXT")
+async def op_text(event): await _open(event, "START_TEXT")
 
 @bot.on(events.CallbackQuery(data=b"OP_SUPPORT"))
-async def op_support(event):
-    await _open(event, "SUPPORT")
+async def op_support(event): await _open(event, "SUPPORT")
 
-@bot.on(events.CallbackQuery(data=b"OP_FORCE"))
-async def op_force(event):
-    await _open(event, "MUST_JOIN")
+@bot.on(events.CallbackQuery(data=b"OP_F1"))
+async def op_f1(event): await _open(event, "MUST_JOIN")
+
+@bot.on(events.CallbackQuery(data=b"OP_F2"))
+async def op_f2(event): await _open(event, "MUST_JOIN_2")
 
 @bot.on(events.CallbackQuery(data=b"OP_MAINT"))
-async def op_maint(event):
-    await _open(event, "MAINTENANCE")
+async def op_maint(event): await _open(event, "MAINTENANCE")
 
 @bot.on(events.CallbackQuery(data=b"OP_STATS"))
 async def op_stats(event):
+    if not own(event.sender_id):
+        return await event.answer("⛔", alert=True)
     vals = await settings.all()
-    body = "<b>📊 Stats</b>\n\n"
+    users = 0
+    try:
+        if DB:
+            users = await DB.count_users()
+    except Exception:
+        pass
+    body = f"<b>📊 Stats</b>\n\n<b>Users:</b> <code>{users}</code>\n{DIV}\n"
     for k, v in vals.items():
-        body += f"<b>{k}</b>: <code>{v}</code>\n"
-    await event.edit(body, buttons=[[_btn("🏠 Back","OP_BACK",_S)]], parse_mode="html")
+        body += f"<b>{k}:</b> <code>{v or '—'}</code>\n"
+    await event.edit(body, buttons=[[btn("🏠 Back", "OP_BACK", S)]], parse_mode="html")
+
+@bot.on(events.CallbackQuery(data=b"OP_BC"))
+async def op_bc(event):
+    if not own(event.sender_id):
+        return await event.answer("⛔", alert=True)
+    STATE[event.sender_id] = "BROADCAST"
+    await event.edit(
+        "<b>📨 Broadcast</b>\n\nSend the message to broadcast to all users.\n\n"
+        "<i>HTML supported. Type /cancel to abort.</i>",
+        buttons=[[btn("🏠 Back", "OP_BACK", S)]],
+        parse_mode="html",
+    )
 
 @bot.on(events.NewMessage())
 async def op_input(event):
@@ -81,15 +116,48 @@ async def op_input(event):
         return
     if not event.is_private or not event.text:
         return
+    if event.text == "/cancel":
+        STATE.pop(uid, None)
+        return await event.reply("❌ Cancelled.")
     key = STATE.pop(uid)
     val = event.text.strip()
+    if key == "BROADCAST":
+        return await do_broadcast(event, val)
     await settings.set(key, val)
     label, _ = LABELS[key]
     await event.reply(f"✅ <b>{label}</b> updated:\n<code>{val}</code>", parse_mode="html", buttons=panel_kb())
 
-
-@bot.on(events.CallbackQuery(data=b"OP_OPEN"))
-async def op_open(event):
-    if not own(event.sender_id):
-        return await event.answer("⛔ Owner only", alert=True)
-    await event.edit(PANEL_TEXT, buttons=panel_kb(), parse_mode="html")
+async def do_broadcast(event, text):
+    if not DB:
+        return await event.reply("❌ No database configured.")
+    col = getattr(DB, "users", None)
+    if col is None:
+        db = getattr(DB, "db", None) or getattr(DB, "database", None)
+        if db is not None:
+            col = db["users"]
+    if col is None:
+        return await event.reply("❌ User collection not found.")
+    sent, failed = 0, 0
+    status = await event.reply("📨 Broadcasting...")
+    async for u in col.find({}):
+        uid = u.get("user_id")
+        if not uid:
+            continue
+        try:
+            await bot.send_message(uid, text, parse_mode="html")
+            sent += 1
+        except FloodWaitError as e:
+            await asyncio.sleep(e.seconds)
+            try:
+                await bot.send_message(uid, text, parse_mode="html")
+                sent += 1
+            except Exception:
+                failed += 1
+        except Exception:
+            failed += 1
+        if (sent + failed) % 20 == 0:
+            try:
+                await status.edit(f"📨 Broadcasting...\n✅ {sent} | ❌ {failed}")
+            except Exception:
+                pass
+    await status.edit(f"✅ <b>Broadcast done</b>\n\nSent: <code>{sent}</code>\nFailed: <code>{failed}</code>", parse_mode="html")
