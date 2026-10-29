@@ -43,6 +43,7 @@ async def panel(event):
 
 @bot.on(events.CallbackQuery(data=b"OP_OPEN"))
 async def op_open(event):
+    await safe_answer(event)
     if not own(event.sender_id):
         return await safe_answer(event, "⛔ Owner only", alert=True)
     await event.edit(PANEL_TEXT, buttons=panel_kb(), parse_mode="html")
@@ -111,6 +112,9 @@ async def op_input(event):
     if uid not in STATE:
         return
     if not event.is_private or not event.text:
+        return
+    if event.text.startswith("/"):
+        STATE.pop(uid, None)
         return
     if event.text == "/cancel":
         STATE.pop(uid, None)

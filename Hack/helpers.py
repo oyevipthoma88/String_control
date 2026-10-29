@@ -132,19 +132,6 @@ async def join_checker(e):
         return True
 
 
-def paste(text):
-    link = 'https://spaceb.in/'
-    url = 'https://spaceb.in/api/v1/documents'
-    payload = {"content": text, "extension": "txt"}
-    headers = {
-        "Content-Type": "application/json"
-    }
-
-    response = r.post(url, json=payload, headers=headers)
-    hash = response.json().get('payload').get('id')
-
-    return link + hash
-
 
 def on_callback(data=None):
     def dec(func):

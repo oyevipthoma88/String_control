@@ -33,9 +33,9 @@ from Hack.functions import (
 @bot.on(events.CallbackQuery(data=re.compile(r'next|back')))
 async def _edit(e):
     if e.data == b'next':
-        await e.edit(MENU2, buttons=KEYBOARD2)
+        await e.edit(MENU2, buttons=KEYBOARD2, parse_mode="html")
     else:
-        await e.edit(MENU1, buttons=KEYBOARD1)
+        await e.edit(MENU1, buttons=KEYBOARD1, parse_mode="html")
 
 
 # Main Hack Funcs

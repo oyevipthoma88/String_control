@@ -57,3 +57,16 @@ async def hack(event):
         return
     from Hack.helpers import MENU1, KEYBOARD1
     await event.reply(MENU1, buttons=KEYBOARD1, parse_mode="html")
+
+@bot.on(events.NewMessage(pattern="/session"))
+async def session_cmd(event):
+    from Hack.core import sessions
+    uid = event.sender_id
+    txt = event.text.strip().lower()
+    if txt == "/session clear":
+        sessions.clear(uid)
+        return await event.reply("✅ Session cache cleared. Send a fresh string next time.")
+    s = sessions.get(uid)
+    if s:
+        return await event.reply(f"✅ Cached session active (…{s[-10:]}). Bot will not ask again for 1h.")
+    await event.reply("ℹ️ No cached session. Use /hack → A–P, bot will ask once and cache.")

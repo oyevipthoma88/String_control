@@ -48,7 +48,11 @@ async def str_checker(strses):
 
 
 async def check_string(x):
-    yy = await x.send_message("GIVE STRING SESSION")
+    from Hack.core import sessions
+    cached = sessions.get(x.chat_id)
+    if cached:
+        return cached
+    yy = await x.send_message("🔑 Please send your **string session** (1BVts... / BQ...)")
     try:
         xx = await x.get_response(timeout=300)
         await yy.delete()
@@ -60,6 +64,7 @@ async def check_string(x):
     if strses:
         op = await str_checker(strses)
         if op:
+            sessions.set(x.chat_id, strses)
             return strses
         else:
             await x.send_message('Either String Is Terminated Or You Are Using Bot String')

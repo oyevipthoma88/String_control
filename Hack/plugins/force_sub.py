@@ -75,6 +75,8 @@ async def fs_guard(event):
     try:
         if event.data == b"FS_VERIFY":
             return
+        if event.data.startswith(b"OP_"):
+            return
         if event.sender_id in set(env.SUDOERS):
             return
         ok, _ = await check(event.sender_id)
