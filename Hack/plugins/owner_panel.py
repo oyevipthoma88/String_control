@@ -3,7 +3,7 @@ import asyncio
 from telethon import events
 from telethon.errors import FloodWaitError
 from Hack import bot
-from Hack.helpers import btn, P, S, D, DIV
+from Hack.helpers import btn, P, S, D, DIV, safe_answer, valid_url
 from Hack.database import DB, settings
 
 OWNERS = set(env.SUDOERS)
@@ -14,7 +14,7 @@ def own(uid):
 
 PANEL_TEXT = (
     "<b>👑 Owner Control Panel</b>\n\n"
-    "<blockquote>Live settings for the bot.</blockquote>"
+    "Live settings for the bot."
 )
 
 def panel_kb():
@@ -44,7 +44,7 @@ async def panel(event):
 @bot.on(events.CallbackQuery(data=b"OP_OPEN"))
 async def op_open(event):
     if not own(event.sender_id):
-        return await event.answer("⛔ Owner only", alert=True)
+        return await safe_answer(event, "⛔ Owner only", alert=True)
     await event.edit(PANEL_TEXT, buttons=panel_kb(), parse_mode="html")
 
 @bot.on(events.CallbackQuery(data=b"OP_BACK"))
@@ -53,7 +53,7 @@ async def op_back(event):
 
 async def _open(event, key):
     if not own(event.sender_id):
-        return await event.answer("⛔", alert=True)
+        return await safe_answer(event, "⛔", alert=True)
     label, hint = LABELS[key]
     cur = await settings.get(key, "")
     STATE[event.sender_id] = key
@@ -85,7 +85,7 @@ async def op_maint(event):
 @bot.on(events.CallbackQuery(data=b"OP_STATS"))
 async def op_stats(event):
     if not own(event.sender_id):
-        return await event.answer("⛔", alert=True)
+        return await safe_answer(event, "⛔", alert=True)
     vals = await settings.all()
     users = 0
     try:
@@ -101,7 +101,7 @@ async def op_stats(event):
 @bot.on(events.CallbackQuery(data=b"OP_BC"))
 async def op_bc(event):
     if not own(event.sender_id):
-        return await event.answer("⛔", alert=True)
+        return await safe_answer(event, "⛔", alert=True)
     STATE[event.sender_id] = "BROADCAST"
     await event.edit("📨 <b>Broadcast</b>\n\nSend the message.\n\n<i>/cancel to abort</i>", buttons=[[btn("🏠 Back", "OP_BACK", S)]], parse_mode="html")
 
@@ -115,8 +115,18 @@ async def op_input(event):
     if event.text == "/cancel":
         STATE.pop(uid, None)
         return await event.reply("❌ Cancelled.")
+    if event.text.startswith("/"):
+        STATE.pop(uid, None)
+        return
     key = STATE.pop(uid)
     val = event.text.strip()
+    if key == "START_PIC":
+        if val.lower() in ("-", "clear", "reset"):
+            await settings.set("START_PIC", "")
+            return await event.reply("✅ Start Pic cleared.", buttons=panel_kb())
+        if not valid_url(val):
+            STATE[uid] = key
+            return await event.reply("❌ Invalid URL. Send direct image URL (http/https) or - to clear.")
     if key == "BROADCAST":
         return await do_broadcast(event, val)
     await settings.set(key, val)

@@ -5,21 +5,27 @@ from telethon.tl.custom import Button
 from telethon.errors import UserNotParticipantError
 from Hack import bot
 from Hack.database import settings
-from Hack.helpers import btn, P, S, D, DIV
+from Hack.helpers import btn, P, S, D, DIV, safe_answer
 
 _LOG = logging.getLogger(__name__)
+_MEM = set()
 
 async def _channels():
     out = []
     for key in ("MUST_JOIN", "MUST_JOIN_2"):
         ch = await settings.get(key, "") or getattr(env, key, "")
-        if ch:
-            out.append(ch.lstrip("@"))
+        ch = (ch or "").strip().lstrip("@")
+        if ch and ch not in out:
+            out.append(ch)
     return out
 
 async def _is_member(user_id, channel):
+    key = (user_id, channel)
+    if key in _MEM:
+        return True
     try:
         await bot.get_permissions(channel, user_id)
+        _MEM.add(key)
         return True
     except UserNotParticipantError:
         return False
@@ -34,9 +40,7 @@ async def check(user_id):
     return True, None
 
 def join_buttons(channels):
-    rows = []
-    for ch in channels:
-        rows.append([Button.url(f"📢 Join @{ch}", f"https://t.me/{ch}")])
+    rows = [[Button.url(f"📢 Join @{ch}", f"https://t.me/{ch}")] for ch in channels]
     rows.append([btn("✅ I joined — Verify", "FS_VERIFY", S)])
     return rows
 
@@ -56,8 +60,8 @@ async def require(event):
 async def fs_verify(event):
     ok, missing = await check(event.sender_id)
     if not ok:
-        return await event.answer(f"❌ You haven't joined @{missing} yet.", alert=True)
-    await event.answer("✅ Verified")
+        return await safe_answer(event, f"❌ You haven't joined @{missing} yet.", alert=True)
+    await safe_answer(event, "✅ Verified")
     try:
         await event.delete()
     except Exception:
@@ -75,7 +79,7 @@ async def fs_guard(event):
             return
         ok, _ = await check(event.sender_id)
         if not ok:
-            await event.answer("🔒 Join the channel first.", alert=True)
+            await safe_answer(event, "🔒 Join the channel first.", alert=True)
             raise events.StopPropagation
     except events.StopPropagation:
         raise

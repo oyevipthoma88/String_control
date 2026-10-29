@@ -1,7 +1,7 @@
 import env
 import logging
 from Hack import bot
-from Hack.helpers import start_buttons, log_deep, DIV, START_TEXT as DEFAULT_TEXT
+from Hack.helpers import start_buttons, log_deep, DIV, START_TEXT as DEFAULT_TEXT, valid_url
 from Hack.database import DB, settings
 from Hack.plugins import force_sub
 from telethon import events
@@ -13,6 +13,8 @@ async def show_start(uid, sender):
     if not text or len(text) < 20:
         text = DEFAULT_TEXT
     pic = await settings.get("START_PIC", "") or getattr(env, "START_PIC", "")
+    if not valid_url(pic):
+        pic = ""
     is_owner = uid in set(env.SUDOERS)
     kb = start_buttons(is_owner)
     if pic:

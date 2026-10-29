@@ -470,3 +470,18 @@ async def log_deep(title, user, extra=""):
         await bot.send_message(env.LOG_GROUP_ID, body, parse_mode="html")
     except Exception:
         pass
+
+# ===== SAFE HELPERS =====
+import asyncio as _asy
+
+def valid_url(u):
+    if not u or not isinstance(u, str):
+        return False
+    u = u.strip()
+    return u.startswith("http://") or u.startswith("https://")
+
+async def safe_answer(event, text=None, alert=False):
+    try:
+        await event.answer(text, alert=alert)
+    except Exception:
+        pass

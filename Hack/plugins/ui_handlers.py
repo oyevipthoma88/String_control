@@ -10,7 +10,7 @@ async def back_cb(event):
 
 @bot.on(events.CallbackQuery(data=b"VAULT"))
 async def vault_cb(event):
-    await event.edit(MENU1, buttons=KEYBOARD1)
+    await event.edit(MENU1, buttons=KEYBOARD1, parse_mode="html")
 
 
 @bot.on(events.CallbackQuery(data=b"ACCOUNT"))
