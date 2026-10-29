@@ -2,11 +2,14 @@ from pyrogram import Client, filters
 from pyrogram.types import CallbackQuery, Message
 from pyrogram.raw.functions.account import GetAuthorizations, ResetAuthorization
 from apex.helpers import CANCEL_KEYBOARD, BACK_KEYBOARD
+
 waiting = set()
+
 @Client.on_callback_query(filters.regex("^revoke$"))
 async def revoke_start(client, cq: CallbackQuery):
     waiting.add(cq.from_user.id)
     await cq.message.edit_text("🗑️ **Revoke**\nPaste your **session string**:", reply_markup=CANCEL_KEYBOARD)
+
 @Client.on_message(filters.private & filters.text, group=2)
 async def revoke_handler(client, message: Message):
     uid = message.from_user.id

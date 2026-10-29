@@ -3,11 +3,14 @@ from pyrogram.types import CallbackQuery, Message
 from apex.helpers import CANCEL_KEYBOARD, BACK_KEYBOARD
 from apex.database import db
 from apex.utils import pyro_session
+
 states = {}
+
 @Client.on_callback_query(filters.regex("^gen$"))
 async def gen_start(client, cq: CallbackQuery):
     states[cq.from_user.id] = {"step": "api_id"}
     await cq.message.edit_text("🔐 **1/4** Send **API_ID** (my.telegram.org):", reply_markup=CANCEL_KEYBOARD)
+
 @Client.on_message(filters.private & filters.text, group=1)
 async def session_input(client, message: Message):
     uid = message.from_user.id
