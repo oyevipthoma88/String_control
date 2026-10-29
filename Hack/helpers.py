@@ -160,7 +160,7 @@ def on_callback(data=None):
                         pass
                 else:
                     LOGGER(__name__).error(ERROR_TXT)
-                await e.reply('Some Error occur from bot side. Please report it to @MASTIWITHFRIENDSXD')
+                await e.reply('Some Error occur from bot side. Please try again or contact support.')
 
         bot.add_event_handler(wrap, CallbackQuery(data=data))
 
@@ -381,13 +381,15 @@ START_TEXT = (
     "<i>Secure · Fast · Reliable</i>\n\n"
     "<b>Your Telegram session cockpit.</b>\n"
     "Create, inspect and revoke Pyrogram & Telethon sessions — with bank-grade hygiene.\n\n"
-    f"{DIV}\n"
+    "━━━━━━━━━━━━━━━\n"
     "<b>⚡ What you can do</b>\n"
-    "• Generate a string session\n"
-    "• Check 2FA and account info\n"
-    "• Revoke every other device\n"
-    "• Manage groups and channels\n"
-    f"{DIV}\n\n"
+    "• <b>Generate</b> Pyrogram & Telethon string sessions\n"
+    "• <b>Inspect</b> account, 2FA, active devices\n"
+    "• <b>Revoke</b> every other session in one tap\n"
+    "• <b>Manage</b> groups, channels & admin rights\n"
+    "• <b>Backup</b> chats with encrypted storage\n"
+    "━━━━━━━━━━━━━━━\n\n"
+    "<b>🔒 Bank-grade hygiene</b> · <b>⚡ Telethon 1.45</b> · <b>🎨 Bot API 9.4</b>\n\n"
     "<i>Tap a module below to begin.</i>"
 )
 

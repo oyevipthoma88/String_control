@@ -44,15 +44,21 @@ async def panel(event):
 @bot.on(events.CallbackQuery(data=b"OWNER_OPEN"))
 async def op_open(event):
     await safe_answer(event)
+    await safe_answer(event)
     if not own(event.sender_id):
         return await safe_answer(event, "⛔ Owner only", alert=True)
-    await event.edit(PANEL_TEXT, buttons=panel_kb(), parse_mode="html")
+    try:
+        await event.edit(PANEL_TEXT, buttons=panel_kb(), parse_mode="html")
+    except Exception:
+        await event.respond(PANEL_TEXT, buttons=panel_kb(), parse_mode="html")
 
 @bot.on(events.CallbackQuery(data=b"OP_BACK"))
 async def op_back(event):
+    await safe_answer(event)
     await event.edit(PANEL_TEXT, buttons=panel_kb(), parse_mode="html")
 
 async def _open(event, key):
+    await safe_answer(event)
     if not own(event.sender_id):
         return await safe_answer(event, "⛔", alert=True)
     label, hint = LABELS[key]

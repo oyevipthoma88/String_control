@@ -30,7 +30,7 @@ from Hack.functions import (
 # Menu edits
 
 
-@bot.on(events.CallbackQuery(data=re.compile(r'next|back')))
+@bot.on(events.CallbackQuery(data=re.compile(r'^(next|back)$')))
 async def _edit(e):
     if e.data == b'next':
         await e.edit(MENU2, buttons=KEYBOARD2, parse_mode="html")
@@ -186,7 +186,7 @@ async def l(e):
                              buttons=BROADCAST_BUTTONS)
 
 
-@on_callback(data=re.compile(r'[123]'))
+@on_callback(data=re.compile(r'^(1|2|3)$'))
 async def _123(e):
     async with bot.conversation(e.chat_id) as x:
         string = await check_string(x)
@@ -235,7 +235,7 @@ async def n(e):
         await invite_all(string, from_grp, to_grp, x)
 
 
-@on_callback(data=re.compile(r'[OP]'))
+@on_callback(data=re.compile(r'^(O|P)$'))
 async def o(e):
     async with bot.conversation(e.chat_id) as x:
         string = await check_string(x)

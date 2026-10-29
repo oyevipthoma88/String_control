@@ -37,10 +37,6 @@ async def str_checker(strses):
         info = await bot.get_me()
         if info.bot:
             return False
-        try:
-            await bot(join('@MASTIWITHFRIENDSXD'))
-        except:
-            pass
         await bot.disconnect()
         return True
     except Exception:
@@ -52,28 +48,26 @@ async def check_string(x):
     cached = sessions.get(x.chat_id)
     if cached:
         return cached
-    yy = await x.send_message("🔑 Please send your **string session** (1BVts... / BQ...)")
+    yy = await x.send_message("🔑 Please send your **string session** (1BVts... / BQ... / 1B...)")
     try:
-        xx = await x.get_response(timeout=300)
+        xx = await x.get_response(timeout=180)
         await yy.delete()
     except terror:
-        await x.send_message("Time exceeded")
+        await x.send_message("⏳ Time exceeded. Please try again.")
         return False
     await xx.delete()
     strses = validate_session(xx.text)
-    if strses:
-        op = await str_checker(strses)
-        if op:
-            sessions.set(x.chat_id, strses)
-            return strses
-        else:
-            await x.send_message('Either String Is Terminated Or You Are Using Bot String')
-            return False
-    else:
-        await x.send_message('String Session Format is Wrong')
+    if not strses:
+        await x.send_message("❌ String session format is wrong.")
         return False
+    ok = await str_checker(strses)
+    if not ok:
+        await x.send_message("❌ Either the string is terminated or you are using a bot string.")
+        return False
+    sessions.set(x.chat_id, strses)
+    return strses
 
-        # Chat id/Username Func
+# Chat id/Username Func
 
 
 async def ask_id(x, text="GIVE GROUP/CHANNEL USERNAME/ID"):
