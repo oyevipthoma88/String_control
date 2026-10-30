@@ -260,22 +260,6 @@ KEYBOARD2 = [
 # ===== APEX PREMIUM UI =====
 from datetime import datetime
 
-START_TEXT = (
-    "<b>🛡️ APEX STRING CONTROL</b>\n"
-    "<i>Secure · Fast · Reliable</i>\n\n"
-    "<b>Your Telegram session cockpit.</b>\n"
-    "Create, inspect and revoke Pyrogram & Telethon sessions — with bank-grade hygiene.\n\n"
-    "━━━━━━━━━━━━━━━\n"
-    "<b>⚡ What you can do</b>\n"
-    "• <b>Generate</b> Pyrogram & Telethon string sessions\n"
-    "• <b>Inspect</b> account, 2FA, active devices\n"
-    "• <b>Revoke</b> every other session in one tap\n"
-    "• <b>Manage</b> groups, channels & admin rights\n"
-    "• <b>Backup</b> chats with encrypted storage\n"
-    "━━━━━━━━━━━━━━━\n\n"
-    "<b>🔒 Bank-grade hygiene</b> · <b>⚡ Telethon 1.45</b> · <b>🎨 Bot API 9.4</b>\n\n"
-    "<i>Tap a module below to begin.</i>"
-)
 
 START_BUTTON = [
     [_btn("🔐 Vault", "VAULT", _P), _btn("📊 Account", "ACCOUNT", _P)],
@@ -335,20 +319,6 @@ KEYBOARD2 = [
     [_btn("◀ Back","back",_S)],
 ]
 
-START_TEXT = (
-    "<b>🛡️ APEX STRING CONTROL</b>\n"
-    "<i>Secure · Fast · Reliable</i>\n\n"
-    "<b>Your Telegram session cockpit.</b>\n"
-    "Create, inspect and revoke Pyrogram & Telethon sessions with bank-grade hygiene.\n\n"
-    "━━━━━━━━━━━━━━━\n"
-    "<b>⚡ Features</b>\n"
-    "• Pyrogram & Telethon sessions\n"
-    "• 2FA protected vault\n"
-    "• One-tap revoke\n"
-    "• Encrypted storage\n"
-    "━━━━━━━━━━━━━━━\n\n"
-    "<i>Tap a module below to begin.</i>"
-)
 
 START_BUTTON = [
     [_btn("🔐 Vault","VAULT",_P), _btn("📊 Account","ACCOUNT",_P)],
@@ -380,22 +350,6 @@ _btn = btn
 
 DIV = "━━━━━━━━━━━━━━━"
 
-START_TEXT = (
-    "<b>🛡️ APEX STRING CONTROL</b>\n"
-    "<i>Secure · Fast · Reliable</i>\n\n"
-    "<b>Your Telegram session cockpit.</b>\n"
-    "Create, inspect and revoke Pyrogram & Telethon sessions — with bank-grade hygiene.\n\n"
-    "━━━━━━━━━━━━━━━\n"
-    "<b>⚡ What you can do</b>\n"
-    "• <b>Generate</b> Pyrogram & Telethon string sessions\n"
-    "• <b>Inspect</b> account, 2FA, active devices\n"
-    "• <b>Revoke</b> every other session in one tap\n"
-    "• <b>Manage</b> groups, channels & admin rights\n"
-    "• <b>Backup</b> chats with encrypted storage\n"
-    "━━━━━━━━━━━━━━━\n\n"
-    "<b>🔒 Bank-grade hygiene</b> · <b>⚡ Telethon 1.45</b> · <b>🎨 Bot API 9.4</b>\n\n"
-    "<i>Tap a module below to begin.</i>"
-)
 
 def start_buttons(is_owner=False):
     rows = [
@@ -499,6 +453,19 @@ async def send_media_safe(chat_id, pic, caption, buttons, parse_mode="html"):
         return False
     if any(c in url for c in " ()[]{}"):
         url = quote(url, safe=":/?&=#%")
+    # If URL lacks common image extension, download first
+    has_ext = any(url.lower().split("?")[0].endswith(ext) for ext in (".jpg", ".jpeg", ".png", ".webp"))
+    if not has_ext:
+        try:
+            r = _r.get(url, timeout=15)
+            r.raise_for_status()
+            data = BytesIO(r.content)
+            data.name = "image.jpg"
+            await _b.send_file(chat_id, file=data, caption=caption, buttons=buttons,
+                               parse_mode=parse_mode, force_document=False)
+            return True
+        except Exception:
+            pass
     try:
         await _b.send_file(chat_id, file=url, caption=caption, buttons=buttons,
                            parse_mode=parse_mode, force_document=False)
@@ -520,3 +487,21 @@ async def send_media_safe(chat_id, pic, caption, buttons, parse_mode="html"):
     except Exception:
         pass
     return False
+
+
+START_TEXT = (
+    "<b>🛡️ APEX STRING CONTROL</b>\n"
+    "<i>Secure · Fast · Reliable</i>\n\n"
+    "<b>Your Telegram session cockpit.</b>\n"
+    "Create, inspect and revoke Pyrogram & Telethon sessions — with bank-grade hygiene.\n\n"
+    "━━━━━━━━━━━━━━━\n"
+    "<b>⚡ What you can do</b>\n"
+    "• <b>Generate</b> Pyrogram & Telethon string sessions\n"
+    "• <b>Inspect</b> account, 2FA, active devices\n"
+    "• <b>Revoke</b> every other session in one tap\n"
+    "• <b>Manage</b> groups, channels & admin rights\n"
+    "• <b>Backup</b> chats with encrypted storage\n"
+    "━━━━━━━━━━━━━━━\n\n"
+    "<b>🔒 Bank-grade hygiene</b> · <b>⚡ Telethon 1.45</b> · <b>🎨 Bot API 9.4</b>\n\n"
+    "<i>Tap a module below to begin.</i>"
+)
