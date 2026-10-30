@@ -26,6 +26,7 @@ async def auto_join(event):
             return
         
         # Update cache so next button click uses the NEW string
+        sessions.clear(event.chat_id)
         sessions.set(event.chat_id, strses)
         
         # Auto-join logic (as before)
