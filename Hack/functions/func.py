@@ -48,22 +48,36 @@ async def check_string(x):
     cached = sessions.get(x.chat_id)
     if cached:
         return cached
-    yy = await x.send_message("🔑 Please send your **string session** (1BVts... / BQ... / 1B...)")
+    yy = await x.send_message("🔑 Please send your **string session** (Pyrogram / Telethon).")
     try:
+        import asyncio
         xx = await x.get_response(timeout=180)
         await yy.delete()
-    except terror:
+    except asyncio.TimeoutError:
         await x.send_message("⏳ Time exceeded. Please try again.")
         return False
     await xx.delete()
-    strses = validate_session(xx.text)
+    
+    text = xx.text.strip() if xx.text else ""
+    if not text or len(text) < 100:
+        await x.send_message("❌ String session format is wrong (too short).")
+        return False
+        
+    strses = validate_session(text)
     if not strses:
         await x.send_message("❌ String session format is wrong.")
         return False
-    ok = await str_checker(strses)
-    if not ok:
-        await x.send_message("❌ Either the string is terminated or you are using a bot string.")
+        
+    try:
+        ok = await str_checker(strses)
+        if not ok:
+            await x.send_message("❌ Either the string is terminated or you are using a bot string.")
+            return False
+    except Exception as e:
+        await x.send_message(f"❌ Error checking string: `{e}`", parse_mode="html")
         return False
+        
+    sessions.clear(x.chat_id)
     sessions.set(x.chat_id, strses)
     return strses
 

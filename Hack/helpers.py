@@ -186,55 +186,16 @@ DC_IPV4 = {
 
 
 def validate_session(session):
-    # Telethon Session
-    if session.startswith(CURRENT_VERSION):
-        if len(session.strip()) != 353:
-            return False
-        return StringSession(session)
-
-    # Pyrogram Session
-    elif len(session) in _PYRO_FORM.keys():
-        if len(session) in [351, 356]:
-            dc_id, _, auth_key, _, _ = struct.unpack(
-                _PYRO_FORM[len(session)],
-                base64.urlsafe_b64decode(session + "=" *
-                                         (-len(session) % 4)),
-            )
-        else:
-            dc_id, _, _, auth_key, _, _ = struct.unpack(
-                _PYRO_FORM[len(session)],
-                base64.urlsafe_b64decode(session + "=" *
-                                         (-len(session) % 4)),
-            )
-        return StringSession(CURRENT_VERSION + base64.urlsafe_b64encode(
-            struct.pack(
-                _STRUCT_PREFORMAT.format(4),
-                dc_id,
-                ipaddress.ip_address(DC_IPV4[dc_id]).packed,
-                443,
-                auth_key,
-            )).decode("ascii"))
-    else:
-        return False
-
-# ===== APEX BRANDING =====
-MENU1 = """🛡️ APEX STRING CONTROL
-A Channels | B Info | C Ban | D OTP
-E Join | F Leave | G Delete | H 2FA
-"""
-MENU2 = """🛡️ APEX STRING CONTROL
-I Terminate | J Delete-acc | K Leave-all | L Broadcast
-M Logout | N Scrap | O Demote | P Promote
-"""
-
-# ===== COLOURED KEYBOARD OVERRIDE =====
-try:
-    from telethon.tl.types import KeyboardButtonStyle as _KBS
-    _P = _KBS(bg_primary=True)
-    _D = _KBS(bg_danger=True)
-    _S = _KBS(bg_success=True)
-except Exception:
-    _P = _D = _S = None
+    if not session or not isinstance(session, str):
+        return None
+    session = session.strip()
+    if len(session) < 100:
+        return None
+    # Allow base64url characters (Pyrogram/Telethon both use this)
+    import re
+    if not re.match(r'^[A-Za-z0-9_\-=]+$', session):
+        return None
+    return session
 
 def _btn(t, d, s=None):
     if s is not None:
