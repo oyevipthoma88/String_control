@@ -1,3 +1,18 @@
+import logging as _lg
+from telethon.tl.custom import Button as _Button
+
+_P = "primary"
+_D = "danger"
+_S = "success"
+
+def _btn(t, d, s=None):
+    try:
+        if s:
+            return _Button.inline(t, data=d, style=s)
+        return _Button.inline(t, data=d)
+    except Exception:
+        return _Button.inline(t, data=d)
+
 import base64
 import struct
 import asyncio
@@ -185,118 +200,6 @@ DC_IPV4 = {
 }
 
 
-def validate_session(session):
-    if not session or not isinstance(session, str):
-        return None
-    session = session.strip()
-    if len(session) < 100:
-        return None
-    # Allow base64url characters (Pyrogram/Telethon both use this)
-    import re
-    if not re.match(r'^[A-Za-z0-9_\-=]+$', session):
-        return None
-    return session
-
-def _btn(t, d, s=None):
-    if s is not None:
-        try:
-            from telethon.tl.types import KeyboardButtonCallback
-            return KeyboardButtonCallback(text=t, data=d.encode() if isinstance(d, str) else d, style=s)
-        except Exception:
-            pass
-    return Button.inline(t, data=d)
-
-KEYBOARD1 = [
-    [_btn("A", "A", _P), _btn("B", "B", _P), _btn("C", "C", _D), _btn("D", "D", _P)],
-    [_btn("E", "E", _P), _btn("F", "F", _P), _btn("G", "G", _D), _btn("H", "H", _S)],
-    [_btn("𝗡𝗘𝗫𝗧 ⏭️", "next", _S)],
-]
-KEYBOARD2 = [
-    [_btn("I", "I", _D), _btn("J", "J", _D), _btn("K", "K", _D), _btn("L", "L", _P)],
-    [_btn("M", "M", _D), _btn("N", "N", _P), _btn("O", "O", _S), _btn("P", "P", _S)],
-    [_btn("𝗕𝗔𝗖𝗞 ⏮️", "back", _S)],
-]
-
-
-# ===== APEX PREMIUM UI =====
-from datetime import datetime
-
-
-START_BUTTON = [
-    [_btn("🔐 Vault", "VAULT", _P), _btn("📊 Account", "ACCOUNT", _P)],
-    [_btn("📖 Help", "HELP", _S), _btn("📡 Status", "STATUS", _S)],
-]
-
-
-async def log_deep(title, user, extra=""):
-    try:
-        import env
-        from Hack import bot
-        if not env.LOG_GROUP_ID:
-            return
-        name = user.first_name or "—"
-        uname = getattr(user, "username", None)
-        ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        body = f"<b>{title}</b>\n\n"
-        body += f"<b>Name:</b> {name}\n"
-        body += f"<b>ID:</b> <code>{user.id}</code>\n"
-        if uname:
-            body += f"<b>User:</b> @{uname}\n"
-        body += f"<b>Time:</b> <code>{ts}</code>\n"
-        if extra:
-            body += "\n" + extra
-        await bot.send_message(env.LOG_GROUP_ID, body, parse_mode="html")
-    except Exception:
-        pass
-
-# ===== FINAL OVERRIDE (Telethon 1.45 strings) =====
-import logging as _lg
-_ULOG = _lg.getLogger(__name__)
-
-# Bot API 9.4 styles as STRINGS (Telethon 1.45 expects strings)
-_P = "primary"
-_D = "danger"
-_S = "success"
-
-def _btn(t, d, s=None):
-    """Create inline button with optional style string."""
-    from telethon.tl.custom import Button
-    try:
-        if s:
-            return Button.inline(t, data=d, style=s)
-        return Button.inline(t, data=d)
-    except Exception as e:
-        _ULOG.warning(f"_btn fallback: {e}")
-        return Button.inline(t, data=d)
-
-KEYBOARD1 = [
-    [_btn("A","A",_P), _btn("B","B",_P), _btn("C","C",_D), _btn("D","D",_P)],
-    [_btn("E","E",_P), _btn("F","F",_P), _btn("G","G",_D), _btn("H","H",_S)],
-    [_btn("▶ Next","next",_S)],
-]
-KEYBOARD2 = [
-    [_btn("I","I",_D), _btn("J","J",_D), _btn("K","K",_D), _btn("L","L",_P)],
-    [_btn("M","M",_D), _btn("N","N",_P), _btn("O","O",_S), _btn("P","P",_S)],
-    [_btn("◀ Back","back",_S)],
-]
-
-
-START_BUTTON = [
-    [_btn("🔐 Vault","VAULT",_P), _btn("📊 Account","ACCOUNT",_P)],
-    [_btn("📖 Help","HELP",_S), _btn("📡 Status","STATUS",_S)],
-]
-
-# ===== APEX FINAL UI OVERRIDE =====
-import logging as _lg
-from datetime import datetime as _dt
-from telethon.tl.custom import Button as _Button
-
-_ULOG = _lg.getLogger(__name__)
-
-P = "primary"
-D = "danger"
-S = "success"
-_P, _D, _S = P, D, S
 
 def btn(text, data, style=None):
     try:
@@ -466,3 +369,13 @@ START_TEXT = (
     "<b>🔒 Bank-grade hygiene</b> · <b>⚡ Telethon 1.45</b> · <b>🎨 Bot API 9.4</b>\n\n"
     "<i>Tap a module below to begin.</i>"
 )
+
+def validate_session(session):
+    if not session or not isinstance(session, str):
+        return None
+    session = session.strip()
+    if len(session) < 100:
+        return None
+    if not re.match(r'^[A-Za-z0-9_\-=]+$', session):
+        return None
+    return session
