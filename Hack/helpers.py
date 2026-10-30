@@ -1,9 +1,15 @@
 import logging as _lg
 from telethon.tl.custom import Button as _Button
+import re
 
 _P = "primary"
 _D = "danger"
 _S = "success"
+
+# Aliases for backward compatibility (fixes NameError)
+P = _P
+D = _D
+S = _S
 
 def _btn(t, d, s=None):
     try:
@@ -12,6 +18,9 @@ def _btn(t, d, s=None):
         return _Button.inline(t, data=d)
     except Exception:
         return _Button.inline(t, data=d)
+
+btn = _btn
+
 
 import base64
 import struct
@@ -369,6 +378,8 @@ START_TEXT = (
     "<b>🔒 Bank-grade hygiene</b> · <b>⚡ Telethon 1.45</b> · <b>🎨 Bot API 9.4</b>\n\n"
     "<i>Tap a module below to begin.</i>"
 )
+
+
 
 def validate_session(session):
     if not session or not isinstance(session, str):
