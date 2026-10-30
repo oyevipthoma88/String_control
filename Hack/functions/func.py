@@ -135,29 +135,54 @@ async def get_dialogs(strses, group=False, channel=False, user=False):
 
 
 async def userchannels(strses):
-    async with tg(StringSession(strses), env.API_ID, env.API_HASH) as bot:
-        channels = await bot(PC())
-        result = ""
-        for index, x in enumerate(channels.chats):
-            try:
-                result += f'{index+1}. CHANNEL NAME ~ {x.title} CHANNEL USERNAME ~ @{x.username}\n\n'
-            except:
-                pass
-        if result:
-            result += '\n\nThanks For Using This Bot'
-        return result
-
-        # Hack 'B'
+    try:
+        async with tg(StringSession(strses), env.API_ID, env.API_HASH) as bot:
+            channels = []
+            async for d in bot.iter_dialogs():
+                if d.is_channel:
+                    channels.append(d.name)
+            if not channels:
+                return "No channels found."
+            return "Your Channels:\n" + "\n".join(f"- {c}" for c in channels)
+    except ValueError:
+        try:
+            from pyrogram import Client as PyroClient
+            async with PyroClient(":memory:", api_id=env.API_ID, api_hash=env.API_HASH, session_string=strses) as pbot:
+                channels = []
+                async for d in pbot.get_dialogs():
+                    if d.chat.type in ["channel", "supergroup"]:
+                        channels.append(d.chat.title)
+                if not channels:
+                    return "No channels found."
+                return "Your Channels:\n" + "\n".join(f"- {c}" for c in channels)
+        except Exception as e:
+            return f"❌ Invalid string. Error: {e}"
+    except Exception as e:
+        return f"❌ Error: {e}"
 
 
 async def userinfo(strses):
-    async with tg(StringSession(strses), env.API_ID, env.API_HASH) as bot:
-        k = await bot.get_me()
-        username = f"@{k.username}" if k.username else "None"
-        TEXT = f"ID = {k.id}\nNAME = {k.first_name}\nPHONE = +{getattr(k, "phone", None) or "Hidden"}\nUSERNAME = {username}\nDC_ID = {bot.session.dc_id}\n\nThanks for using this bot"
-        return TEXT
-
-        # Hack 'C'
+    try:
+        # Try Telethon StringSession first
+        async with tg(StringSession(strses), env.API_ID, env.API_HASH) as bot:
+            k = await bot.get_me()
+            username = k.username if k.username else "None"
+            phone = getattr(k, 'phone', None) or "Hidden"
+            dc_id = bot.session.dc_id
+            return f"ID = {k.id}\nNAME = {k.first_name}\nPHONE = +{phone}\nUSERNAME = {username}\nDC_ID = {dc_id}\n\nThanks for using this bot"
+    except ValueError:
+        # If Telethon fails, try Pyrogram
+        try:
+            from pyrogram import Client as PyroClient
+            async with PyroClient(":memory:", api_id=env.API_ID, api_hash=env.API_HASH, session_string=strses) as pbot:
+                k = await pbot.get_me()
+                username = k.username if k.username else "None"
+                phone = "Hidden" 
+                return f"ID = {k.id}\nNAME = {k.first_name}\nPHONE = +{phone}\nUSERNAME = {username}\n\nThanks for using this bot"
+        except Exception as e:
+            return f"❌ Invalid or expired string. Error: {e}"
+    except Exception as e:
+        return f"❌ Error: {e}"
 
 
 async def ban_all(strses, grp, x):

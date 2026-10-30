@@ -383,10 +383,12 @@ START_TEXT = (
 
 
 
+
+
 def validate_session(session):
     if not session or not isinstance(session, str):
         return None
     session = session.strip()
-    if len(session) < 100 or " " in session:
+    if len(session) < 100:
         return None
     return session
