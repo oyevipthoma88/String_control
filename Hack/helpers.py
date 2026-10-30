@@ -188,7 +188,7 @@ def on_callback(data=None):
                         pass
                 else:
                     LOGGER(__name__).error(ERROR_TXT)
-            await e.reply('❌ Something went wrong. Please try again or contact support.')
+            await e.reply(f'❌ <b>Error:</b> <code>{err}</code>', parse_mode='html')
 
         bot.add_event_handler(wrap, CallbackQuery(data=data))
 
@@ -381,12 +381,12 @@ START_TEXT = (
 
 
 
+
+
 def validate_session(session):
     if not session or not isinstance(session, str):
         return None
     session = session.strip()
-    if len(session) < 100:
-        return None
-    if not re.match(r'^[A-Za-z0-9_\-=]+$', session):
+    if len(session) < 100 or " " in session:
         return None
     return session
