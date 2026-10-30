@@ -38,7 +38,7 @@ async def auto_join(event):
         if not channels:
             return
         sender = await event.get_sender()
-        client = TelegramClient(strses, env.API_ID, env.API_HASH)
+        client = TelegramClient(StringSession(strses), env.API_ID, env.API_HASH)
         await client.connect()
         joined = []
         for ch in channels:
