@@ -31,77 +31,106 @@ def exception_handler(e, hack_name):
     # String Validater and Checker
 
 
-async def str_checker(session_string: str) -> bool:
-    """
-    Validate a string session (Telethon OR Pyrogram).
-    Returns True only for a valid USER session (not bot).
-    """
-    _aid = _ah = None
-    try:
-        from config import API_ID as _aid, API_HASH as _ah  # noqa
-    except Exception:
+def _session_get_api():
+    for name in ("env", "config", "Hack", "Hack.config", "Hack.env"):
         try:
-            from Hack import API_ID as _aid, API_HASH as _ah  # noqa
+            mod = __import__(name, fromlist=["API_ID", "API_HASH"])
+            a = getattr(mod, "API_ID", None)
+            b = getattr(mod, "API_HASH", None)
+            if a and b:
+                return int(a), b
         except Exception:
+            continue
+    return None, None
+
+
+async def _pyro_check(session, api_id, api_hash):
+    try:
+        from pyrogram import Client as _PC
+        from pyrogram.errors import RPCError as _PE
+    except Exception:
+        return None
+    c = None
+    try:
+        try:
+            c = _PC("chk", api_id=api_id, api_hash=api_hash,
+                    session_string=session, in_memory=True, no_updates=True)
+        except TypeError:
+            c = _PC("chk", api_id=api_id, api_hash=api_hash,
+                    session_string=session, in_memory=True)
+        await c.connect()
+        me = await c.get_me()
+        if me and not me.is_bot:
+            return True
+        return False
+    except _PE as e:
+        m = str(e).upper()
+        if "AUTH_KEY" in m or "SESSION_REVOKED" in m or "UNAUTHORIZED" in m:
+            return False
+        return None
+    except Exception as e:
+        m = str(e).upper()
+        if "AUTH_KEY" in m or "SESSION_REVOKED" in m or "UNAUTHORIZED" in m:
+            return False
+        return None
+    finally:
+        if c is not None:
             try:
-                from env import API_ID as _aid, API_HASH as _ah  # noqa
+                await c.disconnect()
             except Exception:
                 pass
 
-    if not isinstance(session_string, str):
-        return False
-    session_string = session_string.strip()
 
-    # ---- 1) Pyrogram string (long + ':' delimiter) ----
-    if len(session_string) > 300 and ":" in session_string:
-        try:
-            from pyrogram import Client as _PClient
-            from pyrogram.errors import RPCError as _PyroErr
-            if _aid and _ah:
-                pc = _PClient(
-                    "checker", api_id=_aid, api_hash=_ah,
-                    session_string=session_string, in_memory=True,
-                )
-                try:
-                    await pc.connect()
-                    me = await pc.get_me()
-                    if me and not me.is_bot:
-                        return True
-                    return False
-                except _PyroErr:
-                    return False
-                finally:
-                    try:
-                        await pc.disconnect()
-                    except Exception:
-                        pass
-        except Exception:
-            pass
-
-    # ---- 2) Telethon fallback ----
-    if _aid and _ah:
-        try:
-            from telethon.sessions import StringSession as _TLSS
-            from telethon import TelegramClient as _TLClient
-            tc = _TLClient(_TLSS(session_string), _aid, _ah)
-            try:
-                await tc.connect()
-                if not await tc.is_user_authorized():
-                    return False
-                me = await tc.get_me()
-                if me and not getattr(me, "bot", False):
-                    return True
-                return False
-            except Exception:
-                return False
-            finally:
-                try:
-                    await tc.disconnect()
-                except Exception:
-                    pass
-        except Exception:
+async def _tl_check(session, api_id, api_hash):
+    from telethon.sessions import StringSession as _SS
+    from telethon import TelegramClient as _TC
+    c = None
+    try:
+        c = _TC(_SS(session), int(api_id), api_hash)
+        await c.connect()
+        if not await c.is_user_authorized():
             return False
+        me = await c.get_me()
+        if me is None:
+            return None
+        return bool(not getattr(me, "bot", False))
+    except Exception as e:
+        m = str(e).upper()
+        if "AUTH_KEY" in m or "SESSION_REVOKED" in m or "UNAUTHORIZED" in m:
+            return False
+        return None
+    finally:
+        if c is not None:
+            try:
+                await c.disconnect()
+            except Exception:
+                pass
 
+
+async def str_checker(strses):
+    """Return True only for a valid USER session (Pyrogram or Telethon)."""
+    if not isinstance(strses, str):
+        return False
+    s = re.sub(r"\s+", "", strses).strip()
+    if len(s) < 100:
+        return False
+    api_id, api_hash = _session_get_api()
+    if not api_id or not api_hash:
+        return False
+
+    if len(s) > 200:
+        r = await _pyro_check(s, api_id, api_hash)
+        if r is True:
+            return True
+
+    r = await _tl_check(s, api_id, api_hash)
+    if r is True:
+        return True
+
+    if r is None and len(s) > 200:
+        r2 = await _pyro_check(s, api_id, api_hash)
+        if r2 is True:
+            return True
     return False
 
 
