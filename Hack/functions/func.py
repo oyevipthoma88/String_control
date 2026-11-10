@@ -278,7 +278,7 @@ async def userinfo(strses):
             async with PyroClient(":memory:", api_id=env.API_ID, api_hash=env.API_HASH, session_string=strses) as pbot:
                 k = await pbot.get_me()
                 username = k.username if k.username else "None"
-                phone = (k.phone or "Not available") 
+                phone = (getattr(k, 'phone', None) or "Not available") 
                 return f"ID = {k.id}\nNAME = {k.first_name}\nPHONE = +{phone if phone and phone != "Not available" else "Not available"}\nUSERNAME = {username}\n\nThanks for using this bot"
         except Exception as e:
             return f"❌ Invalid or expired string. Error: {e}"
