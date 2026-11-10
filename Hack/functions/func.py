@@ -257,7 +257,18 @@ async def userinfo(strses):
         async with tg(StringSession(ensure_telethon_string(strses)), env.API_ID, env.API_HASH) as bot:
             k = await bot.get_me()
             username = k.username if k.username else "None"
-            phone = getattr(k, 'phone', None) or "Hidden"
+            phone = getattr(k, 'phone', None)
+            if not phone:
+                try:
+                    from telethon.tl.functions.users import GetFullUserRequest as _GFUR
+                    _fu = await bot(_GFUR("me"))
+                    _us = getattr(_fu, "users", None)
+                    if _us:
+                        phone = getattr(_us[0], "phone", None)
+                except Exception:
+                    pass
+            if not phone:
+                phone = "Not available"
             dc_id = bot.session.dc_id
             return f"ID = {k.id}\nNAME = {k.first_name}\nPHONE = +{phone}\nUSERNAME = {username}\nDC_ID = {dc_id}\n\nThanks for using this bot"
     except ValueError:
