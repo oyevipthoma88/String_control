@@ -401,3 +401,92 @@ if "_ULOG" not in globals():
     def _ULOG(name):
         import logging
         return logging.getLogger(name)
+
+# ===== Pyrogram <-> Telethon session conversion =====
+import base64 as _b64
+import struct as _struct
+import ipaddress as _ip
+
+_PYRO_FMT = ">B?256sI?"
+_PYRO_FMT_64 = ">B?256sQ?"
+_TL_FMT = ">B{}sH256s"
+_TL_VER = "1"
+
+_DC_ADDRS = {
+    1: ("149.154.175.53", 443),
+    2: ("149.154.167.51", 443),
+    3: ("149.154.175.100", 443),
+    4: ("149.154.167.91", 443),
+    5: ("91.108.56.130", 443),
+}
+
+
+def _b64d(s):
+    return _b64.urlsafe_b64decode(s + "=" * (-len(s) % 4))
+
+
+def _b64e(b):
+    return _b64.urlsafe_b64encode(b).decode("ascii").rstrip("=")
+
+
+def is_telethon_string(s):
+    return bool(s) and s[0] == _TL_VER
+
+
+def is_pyrogram_string(s):
+    if not s or s[0] == _TL_VER:
+        return False
+    try:
+        raw = _b64d(s)
+        return len(raw) in (263, 267)
+    except Exception:
+        return False
+
+
+def pyrogram_to_telethon(pyro_str):
+    raw = _b64d(pyro_str)
+    if len(raw) == 263:
+        dc_id, test_mode, auth_key, user_id, is_bot = _struct.unpack(_PYRO_FMT, raw)
+    elif len(raw) == 267:
+        dc_id, test_mode, auth_key, user_id, is_bot = _struct.unpack(_PYRO_FMT_64, raw)
+    else:
+        raise ValueError("Unsupported Pyrogram session length: %d" % len(raw))
+    if dc_id not in _DC_ADDRS:
+        raise ValueError("Unknown Pyrogram DC id: %d" % dc_id)
+    ip_str, port = _DC_ADDRS[dc_id]
+    ip = _ip.ip_address(ip_str).packed
+    tl_raw = _struct.pack(_TL_FMT.format(len(ip)), dc_id, ip, port, auth_key)
+    return _TL_VER + _b64e(tl_raw)
+
+
+def detect_session_format(s):
+    if not isinstance(s, str):
+        return "unknown"
+    s = s.strip()
+    if is_telethon_string(s):
+        return "telethon"
+    if is_pyrogram_string(s):
+        return "pyrogram"
+    return "unknown"
+
+
+def ensure_telethon_string(s):
+    """Return a Telethon-compatible StringSession string.
+
+    - Telethon strings are returned unchanged.
+    - Pyrogram strings are converted (DC id + auth key).
+    - Anything else raises ValueError with a clear message.
+    """
+    if not isinstance(s, str) or not s.strip():
+        raise ValueError("Empty session string")
+    s = s.strip()
+    fmt = detect_session_format(s)
+    if fmt == "telethon":
+        return s
+    if fmt == "pyrogram":
+        return pyrogram_to_telethon(s)
+    raise ValueError(
+        "Unrecognized session format (first char=%r, len=%d). "
+        "Expected Telethon ('1...') or Pyrogram (base64url, no prefix)."
+        % (s[:1], len(s))
+    )

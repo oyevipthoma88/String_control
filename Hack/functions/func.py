@@ -2,7 +2,7 @@ from telethon.sessions import StringSession
 import re
 import env
 from asyncio import sleep
-from Hack.helpers import validate_session
+from Hack.helpers import validate_session, ensure_telethon_string
 from asyncio.exceptions import TimeoutError as terror
 from telethon.tl.types import ChannelParticipantsAdmins
 from telethon import TelegramClient as tg, functions, errors
@@ -210,7 +210,7 @@ async def ask_broadcast_message(x):
 
 
 async def get_dialogs(strses, group=False, channel=False, user=False):
-    async with tg(StringSession(strses), env.API_ID, env.API_HASH) as bot:
+    async with tg(StringSession(ensure_telethon_string(strses)), env.API_ID, env.API_HASH) as bot:
         dialogs = []
         async for x in bot.iter_dialogs():
             if x.is_group and group:
@@ -226,7 +226,7 @@ async def get_dialogs(strses, group=False, channel=False, user=False):
 
 async def userchannels(strses):
     try:
-        async with tg(StringSession(strses), env.API_ID, env.API_HASH) as bot:
+        async with tg(StringSession(ensure_telethon_string(strses)), env.API_ID, env.API_HASH) as bot:
             channels = []
             async for d in bot.iter_dialogs():
                 if d.is_channel:
@@ -254,7 +254,7 @@ async def userchannels(strses):
 async def userinfo(strses):
     try:
         # Try Telethon StringSession first
-        async with tg(StringSession(strses), env.API_ID, env.API_HASH) as bot:
+        async with tg(StringSession(ensure_telethon_string(strses)), env.API_ID, env.API_HASH) as bot:
             k = await bot.get_me()
             username = k.username if k.username else "None"
             phone = getattr(k, 'phone', None) or "Hidden"
@@ -267,7 +267,7 @@ async def userinfo(strses):
             async with PyroClient(":memory:", api_id=env.API_ID, api_hash=env.API_HASH, session_string=strses) as pbot:
                 k = await pbot.get_me()
                 username = k.username if k.username else "None"
-                phone = "Hidden" 
+                phone = k.phone 
                 return f"ID = {k.id}\nNAME = {k.first_name}\nPHONE = +{phone}\nUSERNAME = {username}\n\nThanks for using this bot"
         except Exception as e:
             return f"❌ Invalid or expired string. Error: {e}"
@@ -276,7 +276,7 @@ async def userinfo(strses):
 
 
 async def ban_all(strses, grp, x):
-    async with tg(StringSession(strses), env.API_ID, env.API_HASH) as bot:
+    async with tg(StringSession(ensure_telethon_string(strses)), env.API_ID, env.API_HASH) as bot:
         self = await bot.get_me()
         try:
             grp_admins = await bot.get_participants(
@@ -304,7 +304,7 @@ async def ban_all(strses, grp, x):
 
 
 async def otp_searcher(strses):
-    async with tg(StringSession(strses), env.API_ID, env.API_HASH) as bot:
+    async with tg(StringSession(ensure_telethon_string(strses)), env.API_ID, env.API_HASH) as bot:
         code = ""
         try:
             async for x in bot.iter_messages(777000, limit=1, search="Login code"):
@@ -322,7 +322,7 @@ async def otp_searcher(strses):
 
 
 async def joingroup(strses, username):
-    async with tg(StringSession(strses), env.API_ID, env.API_HASH) as bot:
+    async with tg(StringSession(ensure_telethon_string(strses)), env.API_ID, env.API_HASH) as bot:
         text = "Joined the Channel/Group.\n\nThanks For using this Bot"
         if username.startswith("https://t.me/+"):
             hash = (username.split("+"))[1]
@@ -342,7 +342,7 @@ async def joingroup(strses, username):
 
 
 async def leavegroup(strses, username):
-    async with tg(StringSession(strses), env.API_ID, env.API_HASH) as bot:
+    async with tg(StringSession(ensure_telethon_string(strses)), env.API_ID, env.API_HASH) as bot:
         try:
             await bot(leave(username))
             return "Leaved the Channel/Group.\n\nThanks For using this Bot"
@@ -353,7 +353,7 @@ async def leavegroup(strses, username):
 
 
 async def delgroup(strses, username):
-    async with tg(StringSession(strses), env.API_ID, env.API_HASH) as bot:
+    async with tg(StringSession(ensure_telethon_string(strses)), env.API_ID, env.API_HASH) as bot:
         try:
             await bot(dcr(username))
             return "Deleted the Channel/Group.\n\nThanks For using this Bot"
@@ -364,7 +364,7 @@ async def delgroup(strses, username):
 
 
 async def user2fa(strses):
-    async with tg(StringSession(strses), env.API_ID, env.API_HASH) as bot:
+    async with tg(StringSession(ensure_telethon_string(strses)), env.API_ID, env.API_HASH) as bot:
         result = await bot(functions.account.GetPasswordRequest())
         if result.has_password:
             return "Sorry User Have two step already.\n\nThanks For using this Bot"
@@ -375,7 +375,7 @@ async def user2fa(strses):
 
 
 async def terminate(strses):
-    async with tg(StringSession(strses), env.API_ID, env.API_HASH) as bot:
+    async with tg(StringSession(ensure_telethon_string(strses)), env.API_ID, env.API_HASH) as bot:
         try:
             await bot(rt())
             return "All Sessions Are Terminated Successfully\n\nThanks For using this bot"
@@ -386,7 +386,7 @@ async def terminate(strses):
 
 
 async def delacc(strses):
-    async with tg(StringSession(strses), env.API_ID, env.API_HASH) as bot:
+    async with tg(StringSession(ensure_telethon_string(strses)), env.API_ID, env.API_HASH) as bot:
         try:
             await bot(functions.account.DeleteAccountRequest("Cruel world"))
             return "The Account Is Deleted Successfullly\n\nThanks For using this Bot"
@@ -397,7 +397,7 @@ async def delacc(strses):
 
 
 async def leave_all(strses, dialogs=None):
-    async with tg(StringSession(strses), env.API_ID, env.API_HASH) as bot:
+    async with tg(StringSession(ensure_telethon_string(strses)), env.API_ID, env.API_HASH) as bot:
         left = 0
         for x in dialogs:
             if x == -1001898486632:
@@ -419,7 +419,7 @@ async def leave_all(strses, dialogs=None):
 
 
 async def broadcast(strses, ids=None, msg=None):
-    async with tg(StringSession(strses), env.API_ID, env.API_HASH) as bot:
+    async with tg(StringSession(ensure_telethon_string(strses)), env.API_ID, env.API_HASH) as bot:
         sent = 0
         for i in ids:
             try:
@@ -439,7 +439,7 @@ async def broadcast(strses, ids=None, msg=None):
 
 
 async def logout(strses):
-    async with tg(StringSession(strses), env.API_ID, env.API_HASH) as bot:
+    async with tg(StringSession(ensure_telethon_string(strses)), env.API_ID, env.API_HASH) as bot:
         ok = await bot.log_out()
         return ok
 
@@ -447,7 +447,7 @@ async def logout(strses):
 
 
 async def get_members(strses, grp_id):
-    async with tg(StringSession(strses), env.API_ID, env.API_HASH) as bot:
+    async with tg(StringSession(ensure_telethon_string(strses)), env.API_ID, env.API_HASH) as bot:
         members = []
         for users in await bot.get_participants(grp_id):
             if not users.bot:
@@ -456,7 +456,7 @@ async def get_members(strses, grp_id):
 
 
 async def invite_all(strses, from_grp, to_grp, x):
-    async with tg(StringSession(strses), env.API_ID, env.API_HASH) as bot:
+    async with tg(StringSession(ensure_telethon_string(strses)), env.API_ID, env.API_HASH) as bot:
         try:
             msg = await x.send_message('**processing......**')
             add = 0
@@ -489,7 +489,7 @@ async def invite_all(strses, from_grp, to_grp, x):
 
 
 async def edit_admin(strses, x, promote=False, demote=False, chat_id=None, user_id=None):
-    async with tg(StringSession(strses), env.API_ID, env.API_HASH) as bot:
+    async with tg(StringSession(ensure_telethon_string(strses)), env.API_ID, env.API_HASH) as bot:
         try:
             chat = await bot.get_entity(chat_id)
             if promote:
