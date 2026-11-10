@@ -403,15 +403,21 @@ if "_ULOG" not in globals():
         return logging.getLogger(name)
 
 
-# ===== Pyrogram -> Telethon converter (all versions) =====
+
 import base64 as _b64
 import struct as _struct
 import ipaddress as _ip
 
-_TL_VER = "1"
-_TL_FMT = ">B{}sH256s"
 
-_DC_ADDRS = {
+# ===== Pyrogram -> Telethon session string converter (all versions) =====
+import base64 as _b64
+import struct as _struct
+import ipaddress as _ip
+
+_TL_VERSION = "1"
+_TL_STRUCT_FMT = ">B{}sH256s"
+
+_DC_IPS = {
     1: ("149.154.175.53", 443),
     2: ("149.154.167.51", 443),
     3: ("149.154.175.100", 443),
@@ -420,81 +426,81 @@ _DC_ADDRS = {
     203: ("91.105.192.100", 443),
 }
 
+
 def _b64d(s):
+    if isinstance(s, bytes):
+        s = s.decode("ascii")
+    s = s.strip()
     return _b64.urlsafe_b64decode(s + "=" * (-len(s) % 4))
 
+
 def _b64e(b):
-    return _b64.urlsafe_b64encode(b).decode("ascii").rstrip("=")
+    # KEEP '=' padding. Telethon StringSession.decode() needs it and
+    # also checks len(body) == 352 to decide IPv4 vs IPv6.
+    return _b64.urlsafe_b64encode(b).decode("ascii")
 
-def _extract_dc_authkey(raw, length):
-    """Har Pyrogram version ke liye dc_id aur auth_key nikaalo."""
-    # v1: ">B?256sI?" ya ">B?256sQ?"
-    if length in (263, 267):
-        if length == 263:
-            dc_id, _, auth_key, _, _ = _struct.unpack(">B?256sI?", raw)
-        else:
-            dc_id, _, auth_key, _, _ = _struct.unpack(">B?256sQ?", raw)
-        return dc_id, auth_key
 
-    # v1.5 (271/275) – kuch forks me same format par 8-byte user_id
-    if length in (271, 275):
-        # Try v2 layout (dc, api_id, test, auth_key, ...)
-        try:
-            dc_id, _, _, auth_key, _, _, _, _ = _struct.unpack(">BBI?256sQ?H16s", raw)
-            return dc_id, auth_key
-        except Exception:
-            pass
-        # Fallback: same as v1 but with extra 4/8 bytes
-        if length == 271:
-            dc_id, _, auth_key, _, _ = _struct.unpack(">B?256sI?", raw[:263])
-        else:
-            dc_id, _, auth_key, _, _ = _struct.unpack(">B?256sQ?", raw[:267])
-        return dc_id, auth_key
+def _pyrogram_fields(raw):
+    """Return (dc_id, auth_key) for every known Pyrogram layout."""
+    n = len(raw)
+    # old: >B?256sI? (263) / >B?256sQ? (267)
+    if n in (263, 267):
+        return raw[0], raw[2:258]
+    # Pyrogram 2.x official: >BI?256sQ? (271)
+    if n == 271:
+        return raw[0], raw[6:262]
+    # forks: >BBI?256sQ?H16s (290) / >BBI?256sQ?H48s (322)
+    # and optional 4-byte CRC -> 294 / 326
+    if n in (290, 294, 322, 326):
+        dc = raw[1] if raw[1] in (1, 2, 3, 4, 5, 203) else raw[0]
+        return dc, raw[7:263]
+    raise ValueError("Unsupported Pyrogram session length: %d" % n)
 
-    # v2: ">BBI?256sQ?H16s" (290) / ">BBI?256sQ?H16s" + CRC (294)
-    if length in (290, 294):
-        dc_id, _, _, auth_key, _, _, _, _ = _struct.unpack(">BBI?256sQ?H16s", raw[:290])
-        return dc_id, auth_key
-
-    # v3: ">BBI?256sQ?H48s" (322) / + CRC (326)
-    if length in (322, 326):
-        dc_id, _, _, auth_key, _, _, _, _ = _struct.unpack(">BBI?256sQ?H48s", raw[:322])
-        return dc_id, auth_key
-
-    raise ValueError(f"Unknown Pyrogram session length: {length}")
-
-def pyrogram_to_telethon(pyro_str):
-    raw = _b64d(pyro_str)
-    dc_id, auth_key = _extract_dc_authkey(raw, len(raw))
-    if dc_id not in _DC_ADDRS:
-        raise ValueError(f"Unknown DC id: {dc_id}")
-    ip_str, port = _DC_ADDRS[dc_id]
-    ip = _ip.ip_address(ip_str).packed
-    tl_raw = _struct.pack(_TL_FMT.format(len(ip)), dc_id, ip, port, auth_key)
-    return _TL_VER + _b64e(tl_raw)
 
 def is_telethon_string(s):
-    return bool(s) and s[0] == _TL_VER
+    return isinstance(s, str) and len(s) > 1 and s[0] == _TL_VERSION
+
 
 def is_pyrogram_string(s):
-    if not s or s[0] == _TL_VER:
+    if not isinstance(s, str) or not s or s[0] == _TL_VERSION:
         return False
     try:
-        raw = _b64d(s)
-        return len(raw) in (263, 267, 271, 275, 290, 294, 322, 326)
+        return len(_b64d(s)) in (263, 267, 271, 290, 294, 322, 326)
     except Exception:
         return False
 
+
+def detect_session_format(s):
+    if is_telethon_string(s):
+        return "telethon"
+    if is_pyrogram_string(s):
+        return "pyrogram"
+    return "unknown"
+
+
+def pyrogram_to_telethon(pyro_str):
+    raw = _b64d(pyro_str)
+    dc_id, auth_key = _pyrogram_fields(raw)
+    if dc_id not in _DC_IPS:
+        raise ValueError("Unknown DC id in Pyrogram session: %r" % dc_id)
+    ip_str, port = _DC_IPS[dc_id]
+    ip = _ip.ip_address(ip_str).packed
+    packed = _struct.pack(_TL_STRUCT_FMT.format(len(ip)), dc_id, ip, port, auth_key)
+    return _TL_VERSION + _b64e(packed)
+
+
 def ensure_telethon_string(s):
-    """Telethon-compatible string return karo (Pyrogram ko convert karke)."""
+    """Return a Telethon-compatible StringSession string."""
     if not isinstance(s, str) or not s.strip():
         raise ValueError("Empty session string")
     s = s.strip()
-    if is_telethon_string(s):
+    fmt = detect_session_format(s)
+    if fmt == "telethon":
         return s
-    if is_pyrogram_string(s):
+    if fmt == "pyrogram":
         return pyrogram_to_telethon(s)
     raise ValueError(
-        f"Unrecognized session format (first char={s[:1]!r}, len={len(s)}). "
+        "Unrecognized session format (first char=%r, len=%d). "
         "Expected Telethon ('1...') or Pyrogram (base64url)."
+        % (s[:1], len(s))
     )
