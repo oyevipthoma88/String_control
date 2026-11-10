@@ -388,13 +388,13 @@ START_TEXT = (
 def validate_session(session):
     if not isinstance(session, str):
         return None
-    session = session.strip()
-    # Structural sanity check only (real validation happens in str_checker)
-    if len(session) < 150 or ":" not in session:
+    s = session.strip()
+    # Pyrogram strings are base64url with NO ':' character.
+    # Telethon strings also have no ':' requirement here.
+    # Any string over 100 chars is accepted — real validation is in str_checker.
+    if len(s) < 100:
         return None
-    return session
-
-
+    return s
 
 # --- Fallback logger (fixes NameError: _ULOG) ---
 if "_ULOG" not in globals():
