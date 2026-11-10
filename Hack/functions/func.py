@@ -31,17 +31,78 @@ def exception_handler(e, hack_name):
     # String Validater and Checker
 
 
-async def str_checker(strses):
+async def str_checker(session_string: str) -> bool:
+    """
+    Validate a string session (Telethon OR Pyrogram).
+    Returns True only for a valid USER session (not bot).
+    """
+    _aid = _ah = None
     try:
-        bot = tg(StringSession(strses), env.API_ID, env.API_HASH)
-        await bot.connect()
-        info = await bot.get_me()
-        if info.bot:
-            return False
-        await bot.disconnect()
-        return True
+        from config import API_ID as _aid, API_HASH as _ah  # noqa
     except Exception:
+        try:
+            from Hack import API_ID as _aid, API_HASH as _ah  # noqa
+        except Exception:
+            try:
+                from env import API_ID as _aid, API_HASH as _ah  # noqa
+            except Exception:
+                pass
+
+    if not isinstance(session_string, str):
         return False
+    session_string = session_string.strip()
+
+    # ---- 1) Pyrogram string (long + ':' delimiter) ----
+    if len(session_string) > 300 and ":" in session_string:
+        try:
+            from pyrogram import Client as _PClient
+            from pyrogram.errors import RPCError as _PyroErr
+            if _aid and _ah:
+                pc = _PClient(
+                    "checker", api_id=_aid, api_hash=_ah,
+                    session_string=session_string, in_memory=True,
+                )
+                try:
+                    await pc.connect()
+                    me = await pc.get_me()
+                    if me and not me.is_bot:
+                        return True
+                    return False
+                except _PyroErr:
+                    return False
+                finally:
+                    try:
+                        await pc.disconnect()
+                    except Exception:
+                        pass
+        except Exception:
+            pass
+
+    # ---- 2) Telethon fallback ----
+    if _aid and _ah:
+        try:
+            from telethon.sessions import StringSession as _TLSS
+            from telethon import TelegramClient as _TLClient
+            tc = _TLClient(_TLSS(session_string), _aid, _ah)
+            try:
+                await tc.connect()
+                if not await tc.is_user_authorized():
+                    return False
+                me = await tc.get_me()
+                if me and not getattr(me, "bot", False):
+                    return True
+                return False
+            except Exception:
+                return False
+            finally:
+                try:
+                    await tc.disconnect()
+                except Exception:
+                    pass
+        except Exception:
+            return False
+
+    return False
 
 
 async def check_string(x):

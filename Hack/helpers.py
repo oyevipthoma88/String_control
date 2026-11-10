@@ -386,9 +386,18 @@ START_TEXT = (
 
 
 def validate_session(session):
-    if not session or not isinstance(session, str):
+    if not isinstance(session, str):
         return None
     session = session.strip()
-    if len(session) < 100:
+    # Structural sanity check only (real validation happens in str_checker)
+    if len(session) < 150 or ":" not in session:
         return None
     return session
+
+
+
+# --- Fallback logger (fixes NameError: _ULOG) ---
+if "_ULOG" not in globals():
+    def _ULOG(name):
+        import logging
+        return logging.getLogger(name)
